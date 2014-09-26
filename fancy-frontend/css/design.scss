@@ -1,0 +1,221 @@
+@import 'consts';
+$color-area-1: #FFF;
+$color-area-1-alpha: 1;
+
+$color-area-2: #FAFAFA;
+$color-area-2-alpha: 0.5;
+
+$color-area-3: #AA24E2;
+$color-area-3-alpha: 0.25;
+
+$color-font-default: #000;
+$color-font-default: #000;
+
+$color-font-weak: #000;
+$color-font-weak: #CCC;
+
+$zoom: 1;
+
+$widget-small-width: 250px;
+$widget-small-height: 250px;
+
+$body-width: 100%;
+$body-height: 100%;
+
+
+$font-stack: Helvetica, sans-serif;
+$font-size: 12px;
+
+
+$img-loading-40x40: url($image-root+'loading.gif');
+
+$state: null;
+/*
+ * |-container
+ * |-content == body
+ * |--> body.*** = Page 
+ * |--> tr.*** = row
+ * widget
+ * element
+ */
+$size: null;
+/*
+ * full
+ * xlarge
+ * large
+ * medium
+ * small
+ * single
+ */
+$zoom: null;
+
+@mixin iconMixin {
+    height: 10px;
+    width: 10px;
+    border: 1px solid gray;
+}
+
+@mixin pseudoIconMixin {
+    @include iconMixin;
+    content: '';
+    display: inline-block;
+}
+
+@mixin beforePseudoIconMixin {
+    @include pseudoIconMixin;
+    margin-left: -15px;
+    margin-right: 5px;
+}
+
+@mixin afterPseudoIconMixin {
+    @include pseudoIconMixin;
+    margin-left: 5px;
+    margin-right: 15px;
+}
+
+@mixin clickableMixin {
+    cursor: pointer;
+}
+
+@mixin headerDesign {
+          height: 15px;
+          background: rgba(100, 100, 100, .2);
+          width: 100%;
+          margin: 0px;
+          text-align: center;
+          padding: 0px;
+          border-top-left-radius: 15px;
+          border-top-right-radius: 15px;
+          
+          h3{
+              font-size: 0.8em;
+              margin: 0 auto 0 auto;
+              padding: 0px 5px 0 5px;
+              display: inline;
+              
+          }
+          
+        
+        .#{$frontend-prefix}close{
+            @include iconMixin;
+            @include clickableMixin;
+            z-index:10002;
+            margin-right: 15px;
+            margin-top: 3px;
+            float: right;
+        }
+        .#{$frontend-prefix}reload{
+            @include iconMixin;
+            @include clickableMixin;
+            z-index:10002;
+            margin-left: 15px;
+            margin-top: 3px;
+            float: left;
+        }
+        
+        > form{
+            display: inline;
+            position: absolute;
+            right: 40px;
+            > input{
+                  margin: 1px;
+                  background: rgba(255, 255, 255, 0.6);
+                  color: black;
+                  border: none;
+                  padding: 0px;
+            }
+        }
+}
+
+
+@mixin coreWrapperDesign {
+    overflow: hidden;
+}
+
+@mixin widgetDesign {
+    @include coreWrapperDesign;
+    font: 100% $font-stack;
+    color: $color-font-default;
+    top: 0px;
+    margin: 15px 5px 5px 15px;
+    padding: 0px 0px 0px 0px;
+    box-shadow: 0px 0px 2px 2px #e6e6e6;
+    border-radius: 15px;
+    min-height: 100px;
+    background: rgba(200, 200, 200, .5);
+
+    &.ui-draggable {
+        display: inline-block;
+        
+        > .#{$frontend-prefix}header {
+            cursor: move;
+        }
+    }
+
+    > .#{$frontend-prefix}header {
+        @include headerDesign; 
+      }
+
+    > .#{$frontend-prefix}body {
+        >[data-view-name] {
+            display: none;
+        }
+        >[data-view-name][data-active=true] {
+            display: block;
+        }
+        
+    }
+    
+}
+
+@mixin modalMaskDesign {
+    position: fixed;
+    top:0px;
+    left:0px;
+    height: 100%;
+    width: 100%;
+    z-index:10000;
+    background-color: rgba(0,0,0,0.5);
+    /*display:none;*/
+}
+
+@mixin popupDesign {
+    @extend widgetDesign;
+    z-index:10000;
+    width:  638px;
+    max-height: 80%;
+    position: absolute;
+    left: 50%;
+    top: 10%;
+    margin-left:-319px;
+    
+    &:after {
+        @include modalMaskDesign;
+        content: '';
+        z-index: -1;
+    }
+    > * {
+    }
+
+    > .#{$frontend-prefix}header {
+        @include headerDesign;
+        background-color: #f2f2f2;
+        border: 1px solid #dadada;
+        height: 30px;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        box-sizing: border-box;
+    }
+    > .#{$frontend-prefix}body {
+        background-color: #FFF;
+        min-height: 120px;
+    }
+    > .#{$frontend-prefix}footer {
+        background-color: #f2f2f2;
+        border: 1px solid #dadada;
+        height: 21px;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+        box-sizing: border-box;
+    }
+}
