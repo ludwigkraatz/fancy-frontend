@@ -336,7 +336,6 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         },
                         scope: this.options.scope
                     });
-                    this.options.scope.init()
                     
                     this.initWidgetStructure();
                     this.element.trigger(widgetConfig.name_event_preInit + '');
