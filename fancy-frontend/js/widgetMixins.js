@@ -102,6 +102,29 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             }
         }
         mixins.DraggableMixin = DraggableMixin;
+        
+
+        var DetachableMixin = {
+            init: function(){
+                var $this = this;
+                this.element.on('dragstart', function(event){
+                    if (event.ctrlKey){
+                        if ($this.options.detachable) {
+                            event.stopImmediatePropagation();
+                            // TODO: init for detachment
+                            return false
+                        }
+                    }else if (event.altKey) {
+                            event.stopImmediatePropagation();
+                        // TODO: drag to add somewhere
+                        // or to replace something
+                        return false
+                    }
+                    return true
+                })
+            }
+        }
+        mixins.DetachableMixin = DetachableMixin;
 
         var NotificationMixin = {
             init: function(){
