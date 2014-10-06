@@ -271,6 +271,9 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             return ret;
                         //}
                     }
+                    
+                    
+                    this.options.scope.init(this);
 
                     //this.element.off('.dynamic-dynamicet-widget');
                     // init mixin bindings
