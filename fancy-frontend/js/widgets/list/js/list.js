@@ -503,7 +503,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 getIdForEntry: function(entry){
                     if (['number', 'string'].indexOf(typeof entry) == -1) {
-                        return entry.__getID();
+                        // .to_other is not nice...
+                        return entry.to_other ? entry.to_other : (entry.uuid ? entry.uuid : entry.__getID());
                     }
                     return entry;//.__getID();
                 },
