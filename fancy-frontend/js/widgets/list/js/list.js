@@ -12,6 +12,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     headerFields: ['uuid', 'data'],
                     resource: null,
                     allowedRelationships: ['-' + widgetConfig.relationships.child_of, '-' + widgetConfig.relationships.instance_of]
+                    entryTemplate: null
                 },
                 /*
                  *
@@ -23,6 +24,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 _create: function() {
                     var $this = this;
+                    this.asTable = !this.options.entryTemplate;
                     //this.use_mixin('view');
                     //this.use_mixin('api');
                     this.options.shape = widgetConfig.name_shape_container;
@@ -42,7 +44,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     //this.element.data('current_page', 1);
                     //this.updatePagination(1, this.get_lastPage())
                     
-                    this.$list = $('<table></table>');
+                    var tag = this.asTable ? 'table' : 'div';
+                    this.$list = $('<'+tag+'></'+tag+'>');
                     this.element.html(this.$list);
                     this.$list.off('.dynamic-list', this.get_reload_handler(this));
                     this.$list.addClass(widgetConfig.name_classes_list);
@@ -93,7 +96,13 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                             $this.$header.find(widgetConfig.selector_elements_header).append(createLink);
                                             createLink.click(function(event){
                                                 event.preventDefault();
-                                                $this.trigger(viewMixinEventPrefix + '-popup', ['create', [relationship]]);
+                                                var view;
+                                                if ($this.asTable) {
+                                                    view = 'popup';
+                                                }else{
+                                                    view = 'show';
+                                                }
+                                                $this.element.trigger(viewMixinEventPrefix + '-' + view, ['create', [resourceList]]);
                                             })
                                         }
                                         if ($this.options.allowedRelationships && $this.options.allowedRelationships.length > 1) {
@@ -141,31 +150,35 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 },
                 
                 addHeader: function(header, classes){
-                    $header = $('<th class="'+(classes ? classes : '')+'"></th>');
+                    var tag = this.asTable ? 'th' : 'div';
+                    $header = $('<'+tag+' class="'+(classes ? classes : '')+'"></'+tag+'>');
                     $header.html(header);
                     //$header.addClass(widgetConfig.name_shape_element);
                     this.$header.append($header);
                 },
                 
                 buildContainer: function(){
+                    var tag = this.asTable ? 'tbody' : 'div';
                     this.$container = this.$list.children(widgetConfig.selector_shape_container);
                     if (this.$container.size() <= 0) {
-                        this.$container = $('<tbody class="'+ widgetConfig.name_classes_body +' '+ widgetConfig.name_shape_container +'"></tbody>');
+                        this.$container = $('<'+tag+' class="'+ widgetConfig.name_classes_body +' '+ widgetConfig.name_shape_container +'"></'+tag+'>');
                         this.$container.insertAfter(this.$header);
                     }
                 },
                 
                 buildHeader: function(){
-                    
+                    var tag = this.asTable ? 'thead' : 'div';
                     this.$header = this.$list.children(widgetConfig.selector_elements_header);
                     if (this.$header.size() == 0) {
-                        this.$list.prepend('<thead class="'+ widgetConfig.name_classes_header +'"></thead>');
+                        this.$list.prepend('<'+tag+' class="'+ widgetConfig.name_classes_header +'"></'+tag+'>');
                         this.$header = this.$list.children(widgetConfig.selector_elements_header);
                     }
                     
                     this.addHeader('', widgetConfig.name_classes_header);
-                    for (var header in this.options.headerFields){
-                        this.addHeader(this.options.headerFields[header], widgetConfig.name_classes_body);
+                    if (this.asTable) {
+                        for (var header in this.options.headerFields){
+                            this.addHeader(this.options.headerFields[header], widgetConfig.name_classes_body);
+                        }
                     }
                     this.addHeader('', widgetConfig.name_classes_footer);
                     
@@ -231,9 +244,10 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 },
                 
                 buildFooter: function(){
+                    var tag = this.asTable ? 'tfoot' : 'div';
                     this.$footer = this.$list.children('.'+ widgetConfig.name_classes_footer);
                     if (this.$footer.size() == 0) {
-                        this.$list.append('<tfoot class="'+ widgetConfig.name_classes_footer +'"></tfoot>');
+                        this.$list.append('<'+tag+' class="'+ widgetConfig.name_classes_footer +'"></'+tag+'>');
                         this.$footer = this.$list.children('.'+ widgetConfig.name_classes_footer);
                     }
                     if (this.options.pagination_asInfinite) {
@@ -483,18 +497,24 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         var output = [];
                         $.each(data, function(index, elem){
                             elem_id = $this.getIdForEntry(elem);
-                            var curOutput = '<tr class="dynamic-list-entry" data-dynamic-list-entry-id="'+elem_id+'">';
+                            var tag = $this.asTable ? 'tr' : 'div';
+                            var curOutput = '<'+tag+' class="dynamic-list-entry" data-dynamic-list-entry-id="'+elem_id+'">';
                             
                             if ($this.$list.data('entry-' + elem_id) != undefined) {
                                 curOutput += $this.$list.data('entry-' + elem_id);
                             }
                             
-                            curOutput += '</tr>'
+                            curOutput += '</'+tag+'>'
                             curOutput = $(curOutput);
                             //curOutput.selectable();
                             //curOutput.attr('plugin-reference', '__id_'+elem_id);
                             //$this.options.scope['__id_'+elem_id] = elem;
-                            $this.options.widgetCore.create_widget(curOutput, 'object:'+ elem_id);
+                            $this.options.widgetCore.create_widget(
+                                                                   curOutput,
+                                                                   $this.options.entryWidget+':'+ elem_id,
+                                                                   {
+                                                                    content: $this.options.entryTemplate
+                                                                   });
                             output.push(curOutput);
                         });
                         $container.prepend(output);
