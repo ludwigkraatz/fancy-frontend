@@ -678,17 +678,18 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 },
                 
                 reload: function(settings){
-                    var reload_sources = settings.reload_sources,
+                    var reload_code = settings.reload_code,
                         callback = settings.callback,
                         $this = this,
                         $parent = this.element.parent(),
                         position = this.element.offset(),
                         identifier = this.options.scope.generateIdentifier();
-                    this.options.scope.log.debug(identifier)
-                    if (reload_sources === true || (reload_sources && reload_sources.length && reload_sources.indexOf('js'))) {
+                    this.options.scope.log.debug('reloading as', identifier)
+                    if (reload_code === true || (reload_code && reload_code.length && reload_code.indexOf('js'))) {
                         this.options.scope.unload_required(function(){
                             $this.options.scope.$apply();
-                            var $clone = $('<div></div>');
+                            var tag = $this.element.prop("tagName");
+                            var $clone = $('<'+tag+'></'+tag+'>');
                             $this.options.widgetCore.create_widget($clone, identifier, $this.options);
                             $this.apply($clone, function($content){
                                 $this.destroy();
