@@ -640,31 +640,36 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         this.$body.html(data)
                     }*/
                     var $this = this,
-                        $data = $(data);
+                        $data = $('<div>'+data+'</div>');
                     $data.find('[load-widget],[load-plugin]').each(function(index, element){
                         var $element = $(element);
                         $this.options.widgetCore.set_options($element, {content:$element.html()})
                         $element.contents().remove();
-                    })
-                    // TODO: handle footer, header & body seperatly in this function, in order to keep view setup
+                    })                    
                     
-                    
+                    // handle them seperatly, to give mixins more control
                     var $body, $header, $footer;
-                    if ($data.children(widgetConfig.selector_elements_body).size()) {
-                        $body = $data.children(widgetConfig.selector_elements_body).html();
+                    if ($data.children('header').size()) {
+                        $header = $data.children('header').contents();
+                    }
+                    if ($data.children('article').size()) {
+                        $body = $data.children('article').contents();
+                    }
+                    if ($data.children('footer').size()) {
+                        $footer = $data.children('footer').contents();
                     }
                     if (!$body && !$footer && !$header) {
                         $body = $data
                     }
                     
                     if ($header) {
-                        this.apply($header, function(content){$this.$header.html($header)})
+                        this.apply($header, function(content){$this.$header.html(content)})
                     }
                     if ($body) {
-                        this.apply($body, function(content){$this.$body.html($body)})
+                        this.apply($body, function(content){$this.$body.html(content)})
                     }
                     if ($footer) {
-                        this.apply($footer, function(content){$this.$footer.html($footer)})
+                        this.apply($footer, function(content){$this.$footer.html(content)})
                     }
                     
                     // apply changed content, because other framework might process the template
