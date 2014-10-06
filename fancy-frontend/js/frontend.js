@@ -48,6 +48,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             this.log_info('init frontendCore' + (coreApp ? ('with coreApp=' + coreApp) : ' as coreApp'))
             this.coreApp = coreApp || this;
             this.__scope = null;
+            this.__log = null;
+            this.__initialized = false;
             
             var $this = this;
             if (settings) {
@@ -645,7 +647,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
                 }
                 return value
             }
-            //console.log(text, prepareObject(this));
+            console.log(text, prepareObject(this));
         },
         
         log_info: function(){
