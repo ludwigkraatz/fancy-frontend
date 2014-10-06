@@ -119,16 +119,12 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
 
         var ResourceMixin = {
             init: function(){
-                var $this = this;
+                var $this = this;/*
                 function initResource() {
                     if ($this.options.scope._resource) {
                         $this.options.resource = $this.options.scope._resource;
                         if ($this.options.scope.__widgetReference) {
                             $this.options.relationship = $this.options.scope.__widgetData;
-                        }
-                    }else{
-                        if ($this.options.resource === undefined){
-                            $this.options.scope.updateResource($this.options.scope.object({target:'uuid', data:$this.object}));
                         }
                     }
                     $this.trigger('resource-updated', [$this.options.resource])
@@ -163,12 +159,46 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         initResourceList();
                     }else $this.options.scope.log.debug('watcher skipped updated list', $this.options.scope._resourceList, $this.options.resourceList)
                 });     
+                if ($this.options.scope.__widgetResource === null){
+                    $this.log('setting default object, not instance')
+                    $this.options.scope.__widgetResource = $this.object;
+                    //$this.options.scope.updateResource($this.options.scope.object({target:'uuid', data:$this.object}));
+                }
                 $this.options.scope.log.debug('init resource')            
-                this.options.scope.initResource();
+                this.options.scope.initResource();*/
                 
+                this.options.scope.prepareResource()
+                if ($this.options.scope.__resourceId === null){
+                    $this.log('setting default object, not instance')
+                    $this.options.scope.__resourceId = $this.object;
+                }
+                
+                this.options.resource = this.options.scope._resource;
+                this.options.resourceList = this.options.scope._resourceList;
+                
+                this.options.scope._resource.bind('replaced', function(event, resource){
+                    var newResource = resource.isBlank() ? null : resource;
+                    if (newResource !== $this.options.resource) {
+                        $this.options.resource = newResource;
+                        $this.trigger('resource-updated', [$this.options.resource])
+                    }
+                });
+                this.options.scope._resourceList.bind('replaced', function(event, resourceList){
+                    var newResourceList = resourceList.isBlank() ? null : resourceList;
+                    if (newResourceList !== $this.options.resourceList) {
+                        $this.options.resourceList = newResourceList;
+                        $this.trigger('resourcelist-updated', [$this.options.resourceList])
+                    }
+                });
+
+                if ($this.options.scope.__widgetReference) {
+                    $this.options.relationship = $this.options.scope.__resourceReference;
+                }
+                        
                 if ($this.options.allowedRelationships === undefined) {
                     $this.options.allowedRelationships = ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of]
                 }
+                this.options.scope.initResource();
                 
                     //this.options.instance = this.api.object.get($this.options.uuid);
                     // TODO: make sure this.options.resource is not just uuid
