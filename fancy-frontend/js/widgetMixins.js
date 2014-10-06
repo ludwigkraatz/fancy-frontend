@@ -236,22 +236,25 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                 init: function(){                    
                     this.$loading = null;
                     this.$loading_toggle = null;
-                    this.element.on('dynamic-loading-widget-failed.dynamic-widget.dynamic-dynamicet-widget', this.get_initFailed_handler(this));
-                    this.element.on('dynamic-widget-loading.dynamic-widget.dynamic-dynamicet-widget', this.get_loadingWidget_handler(this));
+                    //this.element.on('dynamic-loading-widget-failed.dynamic-widget.dynamic-dynamicet-widget', mixins.LoadingMixin.get_initFailed_handler(this));
+                    //this.on(, LoadingMixin.get_loadingWidget_handler(this));
+                    
+                    //this.on(this._widgetConfig.name_event_init, LoadingMixin.get_loadingWidget_handler(this));
+                    this.on(this._widgetConfig.name_event_init, LoadingMixin.get_initWidgetDone_handler(this));
                 },
             
 
                 get_initWidgetDone_handler: function($this){
                     return function(event){
                         // loading init
-                        $this.$loading = $this.element.find('.dynamic-loading:first');
+                        $this.$loading = $this.element;//.find('.dynamic-loading:first');
                         $this.$loading.data('activity_counter', 0);
                         $this.$loading_toggle = $this.$loading.parent().children('.dynamic-hide-for-loading');
                         
-                        $this.element.on('dynamic-start-loading.dynamic-widget.dynamic-dynamicet-widget', $this.get_startLoading_handler($this));
-                        $this.element.on('dynamic-end-loading.dynamic-widget.dynamic-dynamicet-widget', $this.get_endLoading_handler($this));
+                        $this.on($this._widgetConfig.name_event_loading, LoadingMixin.get_startLoading_handler($this));
+                        $this.on($this._widgetConfig.name_event_loadingFinished, LoadingMixin.get_endLoading_handler($this));
                                
-                        event.stopPropagation();
+                        //event.stopPropagation();
                         //todo
                     }
                 },
@@ -274,6 +277,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                             $this.$loading.addClass('dynamic-active');
                             $this.$loading_toggle.hide()
                         }
+                        $this.element.addClass(config.frontend_generateClassName('state-loading'))
                         $this.$loading.data('activity_counter', $this.$loading.data('activity_counter') + 1);
                     }
                 },
@@ -284,19 +288,22 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         if ($this.$loading == null) {
                             return
                         }
-                        if ($this.$loading.hasClass('dynamic-active')){
+                        if ($this.$loading.hasClass(config.frontend_generateClassName('state-loading'))){
                             var counter = $this.$loading.data('activity_counter');
                             if (counter == 0) {
                                 return;
                             }else if (counter == 1) {
+                                $this.element.removeClass(config.frontend_generateClassName('state-loading'))
                                 $this.$loading.removeClass('dynamic-active');
                                 $this.$loading_toggle.show()
                             };
+                            
                             $this.$loading.data('activity_counter', counter - 1);                            
                         }
                     }
                 },
             };
+            mixins.LoadingMixin = LoadingMixin;
             /*
              *
         
