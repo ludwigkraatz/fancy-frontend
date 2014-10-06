@@ -88,8 +88,6 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
                         })
                     }
                 } else if (app.config.init) {
-                    app.validate_app()
-                    app.prepare_app()
                     app.init_app()
                 }
                 // END TODO
@@ -111,8 +109,24 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
                 }
             })
         },
+        
+        init_app:function(){
+            if (this.__initialized) {
+                console.error('already initialized')
+                return
+            }
+            if (this.validate_app()){
+                this.prepare_app();
+                this._init_app();
+                this.__initialized = true;
+            }else{
+                console.warn('not initialized')
+            }
+        },
+        
+        
 
-        init_app: function(){
+        _init_app: function(){
             var selector = this.config.selector;
 
             $(selector).each(function(index, element){
