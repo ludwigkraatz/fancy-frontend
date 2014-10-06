@@ -5,20 +5,54 @@ define(['fancyPlugin!jquery'], function($){
             destroy: function(){
                 this.$body.list('destroy');
             },
-            init: function(_relationship){
+            init: function(_data){
                 var $this = this,
-                    $body = this.$body;
-                $body.attr('plugin-reference', _relationship);
-                if (this.options.scope[_relationship] === undefined) {
-                    this.options.scope[_relationship] = this.options.scope._resource.get('relationship', _relationship);
+                    $body = this.$body,
+                    resourceList,
+                    source = null,
+                    _relationship,
+                    create_as = 'plugin';
+
+                if (!!_data && _data.constructor == Array) {
+                    sources = _data;
+                }else if (!!_data) {
+                    _relationship = _data;
+                    $body.attr(create_as + '-reference', _relationship);
+                    if (this.options.scope._resource && this.options.scope._relationships[_relationship] === undefined) {
+                        this.options.scope._relationships[_relationship] = this.options.scope._resource.get('relationship', _relationship);
+                    }else if (!this.options.scope._resource){
+                        var e = Error('missing resource');
+                        this.log_error('missing resource', e)
+                        throw e
+                    }
+                    resourceList = this.options.scope._relationships[_relationship];
+                }else if ($this.options.resourceList){/*
+                    $this.options.scope.log.debug('setting up list view event proxy');
+                    $this.element.on('resourcelist-updated', function(event, resourceList){
+                        $this.options.scope.log.debug('redirecting update to list view');
+                    });*/
+                    resourceList = $this.options.resourceList;
+                }else{
+                    var e = Error('missing list source');
+                    this.log_error('missing list source', e, _data)
+                    throw e
                 }
-                $this.options.widgetCore.create_plugin($body, 'fancy-frontend.list:'+_relationship+'', this.options);
-                $this.options.scope.log.debug('setting up event listener');
-                $this.element.on('resourcelist-updated', function(event, resource){
-                    $body.triggerHandler('resourcelist-updated', [resource])
-                });
+
+                $this.options.widgetCore['create_' + create_as](
+                                                       $body,
+                                                       'fancy-frontend.list' + (_relationship ? ':'+_relationship : ''),
+                                                       {
+                                                            resourceList: resourceList,
+                                                            source: source,
+                                                            entryWidget: this.options.scope.__widgetNamespace + '.' + this.options.scope.__widgetName,
+                                                            entryTemplate: this.options.content ? this.options.content : null
+                                                        });
                 
                 $this.apply($body);
+                /*if ($this.options.resourceList) {
+                    $this.options.scope.log.debug('initializing list view with current resourceList');
+                    $body.triggerHandler('resourcelist-updated', [$this.options.resourceList])
+                }*/
             }
         },
         
