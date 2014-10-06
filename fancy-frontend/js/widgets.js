@@ -168,13 +168,24 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 _widgetConfig: widgetConfig,
 
                 log: function(){
-                    if (this.options.scope.log) {
+                    if (this.options && this.options.scope && this.options.scope.log) {
                         this.options.scope.log.debug.apply(this, arguments)
                     }else
                     if (this.options.widgetCore) {
                         this.options.widgetCore.log.apply(this, arguments)
                     }else{
                         console.log.apply(console, arguments);
+                    }
+                },
+
+                error: function(){
+                    if (this.options && this.options.scope && this.options.scope.log) {
+                        this.options.scope.log.error.apply(this, arguments)
+                    }else
+                    if (this.options.widgetCore) {
+                        this.options.widgetCore.error.apply(this, arguments)
+                    }else{
+                        console.error.apply(console, arguments);
                     }
                 },
                 
