@@ -415,13 +415,24 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         return false
                     });
                 },
+                
+                start_loading: function(){
+                    this.element.trigger(widgetConfig.name_event_loading);
+                    
+                },
+                
+                finished_loading: function(){
+                    this.element.trigger(widgetConfig.name_event_loadingFinished);
+                    
+                },
+                
                 setupContent: function(){
                     var widgetCore = this.options.widgetCore;
                     var $this = this;
                     if (this.options.load_content || this.options.update_content) {
                         $this.options.scope.log.debug('content loading')
                         if (! this.options.update_content) {
-                            this.element.trigger(widgetConfig.name_event_loading);
+                            $this.start_loading()
                         }
 
                         var data = {}
@@ -430,7 +441,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             $.extend(data, this.options.widget_data);
                         }
 
-                        this.element.triggerHandler(widgetConfig.name_event_loadingStart);
+                        this.start_loading()
                         // load and initialize it
                         widgetCore.widgets.get({
                             "url": this.options.widget_url + '/',
@@ -440,7 +451,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                                                     response, text, xhr
                                                 ]
                                             );
-                                            $this.element.triggerHandler(widgetConfig.name_event_loadingFinished);
+                                            $this.finished_loading();
                                     },
                             "fail": function(jqXHR, status, statusText){
                                             $this.element.trigger(
@@ -448,7 +459,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                                                     jqXHR, status, statusText
                                                 ]
                                             );
-                                            $this.element.triggerHandler(widgetConfig.name_event_loadingFinished);
+                                            $this.finished_loading();
 
                                     }
                         });
