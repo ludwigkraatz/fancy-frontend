@@ -203,6 +203,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 addHeader: function(header, classes){
                     var tag = this.asTable ? 'th' : 'div';
                     $header = $('<'+tag+' class="'+(classes ? classes : '')+'"></'+tag+'>');
+                    $header.attr(config.frontend_generateAttributeName('name'), header);
                     $header.html(header);
                     //$header.addClass(widgetConfig.name_shape_element);
                     this.$header.append($header);
