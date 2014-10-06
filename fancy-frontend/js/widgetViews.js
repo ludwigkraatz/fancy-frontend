@@ -61,21 +61,24 @@ define(['fancyPlugin!jquery'], function($){
             },
             init: function(){
                 var $this = this;
-                if (this.options.resource) {
+                if (this.options.resource && !this.options.resource.isBlank()) {this.log('found ', this.options.resource)
                     this.options.resource.load(function (result){
-                        if ($this.element.filter('tr.' + $this._widgetConfig.name_shape_content).size()){
-                                bodyClass = $this._widgetConfig.name_classes_body,
+                        if ($this.element.filter('.' + $this._widgetConfig.name_shape_row).size()){
+                            $this.log('as table entry')
+                            var bodyClass = $this._widgetConfig.name_classes_body,
                                 headerClass = $this._widgetConfig.name_classes_header;
+
                             $this.$body.each(function(index, elem) {
                                 header = $this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).get(index);
-                                $(elem).html($this.options.scope.resource[$(header).html()])
+                                $this.log('getting header', $(header).attr(config.frontend_generateAttributeName('name')))
+                                $(elem).html($this.options.scope.resource[$(header).attr(config.frontend_generateAttributeName('name'))])
                             });
                             
                             
-                            $this.element.selectable()
-                            $this.$body.click(function(){
+                            //$this.element.selectable()
+                            /*$this.$body.click(function(){
                                 $this.options.scope.log.debug('todo: zoom into this entry');
-                            })
+                            })*/
                             
                             var $seperate = $('<a href="#"> > </a>');
                             $seperate.click(function(event){
@@ -87,10 +90,15 @@ define(['fancyPlugin!jquery'], function($){
                             $this.$footer.html($seperate)
                         }else{
                             if (!$this.$body.html()) {
+                                $this.log('plain')
                                 $this.$body.html($this.options.scope.resource.uuid)
-                            }else $this.options.scope.log.debug('using existing view')
+                            }else $this.log('using existing view')
                         }
                     });
+                }else{
+                    var viewMixinEventPrefix = 'dynamic-view' // TODO: get from this._widgetConfig
+                    this.log('show create view, cause no resource found')
+                    //$this.trigger(viewMixinEventPrefix + '-show.dynamic-widget.dynamic-dynamicet-widget', ['create']);
                 }
                 
             }
@@ -117,7 +125,8 @@ define(['fancyPlugin!jquery'], function($){
                     })
                 }else{
                     //TODO
-                    $body.html('error');
+                    $this.error('cannot create resource if not defined with relationship. YET')
+                    $body.html('see log');
                 }
             }
         }
