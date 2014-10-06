@@ -53,7 +53,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
 
             /* ->classes */
             widgetConfig.name_classes_modalMask = config.frontend_generateClassName('modal-mask');
-            widgetConfig.name_classes_close = config.frontend_generateClassName('close');
+            widgetConfig.name_classes_close = config.frontend_generateClassName('action-close');
             widgetConfig.name_classes_accept = config.frontend_generateClassName('accept');
             widgetConfig.name_classes_add = config.frontend_generateClassName('add');
             widgetConfig.name_classes_cancel = config.frontend_generateClassName('cancel');
@@ -78,19 +78,20 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
             widgetConfig.name_classes_descriptive = config.frontend_generateClassName('descriptive');
             widgetConfig.name_classes_deactivated = config.frontend_generateClassName('deactivated');
             widgetConfig.name_classes_sortable = config.frontend_generateClassName('sortable');
-            widgetConfig.name_classes_list = config.frontend_generateClassName('list');
+            widgetConfig.name_classes_list = config.frontend_generateClassName('object-list');
             widgetConfig.name_classes_title = config.frontend_generateClassName('title');
             widgetConfig.name_classes_log = config.frontend_generateClassName('log');
 
-            widgetConfig.name_shape_element = config.frontend_generateClassName('element');
-            widgetConfig.name_shape_content = config.frontend_generateClassName('content');
-            widgetConfig.name_shape_page = config.frontend_generateClassName('page');
-            widgetConfig.name_shape_widget = config.frontend_generateClassName('widget');
-            widgetConfig.name_shape_container = config.frontend_generateClassName('container');
-            widgetConfig.name_size_sizeless = config.frontend_generateClassName('sizeless');
-            widgetConfig.name_shape_shapeless = config.frontend_generateClassName('shapeless');
-            widgetConfig.name_size_small = config.frontend_generateClassName('small');
-            widgetConfig.name_size_full = config.frontend_generateClassName('full');
+            widgetConfig.name_shape_element = config.frontend_generateClassName('shape-element');
+            widgetConfig.name_shape_content = config.frontend_generateClassName('shape-content');
+            widgetConfig.name_shape_page = config.frontend_generateClassName('shape-page');
+            widgetConfig.name_shape_row = config.frontend_generateClassName('shape-row');
+            widgetConfig.name_shape_widget = config.frontend_generateClassName('shape-widget');
+            widgetConfig.name_shape_container = config.frontend_generateClassName('shape-container');
+            widgetConfig.name_size_sizeless = config.frontend_generateClassName('size-sizeless');
+            widgetConfig.name_shape_shapeless = config.frontend_generateClassName('shape-shapeless');
+            widgetConfig.name_size_small = config.frontend_generateClassName('size-small');
+            widgetConfig.name_size_full = config.frontend_generateClassName('size-full');
 
             /* -->widgets */
             widgetConfig.name_classes_widgets_core = config.frontend_generateClassName(config.widgets.defaults.core.css);
