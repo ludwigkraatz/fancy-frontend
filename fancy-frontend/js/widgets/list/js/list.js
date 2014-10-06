@@ -11,9 +11,10 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     pagination_asInfinite: false,
                     headerFields: ['uuid', 'data'],
                     resource: null,
-                    allowedRelationships: ['-' + widgetConfig.relationships.child_of, '-' + widgetConfig.relationships.instance_of]
+                    allowedRelationships: ['-' + widgetConfig.relationships.child_of, '-' + widgetConfig.relationships.instance_of],
                     resourceList: null,
                     source: null,
+                    entryWidget: null,
                     entryTemplate: null
                 },
                 /*
