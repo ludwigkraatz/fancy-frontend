@@ -1,4 +1,4 @@
-define(['fancyPlugin!jquery'], function($){
+define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, config){
     var mixins = {}
     
         var Mixin = {};
