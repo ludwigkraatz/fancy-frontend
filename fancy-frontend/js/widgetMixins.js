@@ -17,7 +17,18 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     }else{
                         if (this.setDefaultView) {
                             this.setDefaultView()
+                        }else{
+                            ViewMixin.setDefaultView.call(this);
                         }
+                    }
+                },
+                
+
+                setDefaultView: function(){
+                    if (this.options.activeView) {
+                        this.trigger(widgetConfig.mixins.ViewMixin.event_prefix + '-show', [this.options.activeView]);
+                    }else {
+                        this.log('no active view defined')
                     }
                 },
                 
