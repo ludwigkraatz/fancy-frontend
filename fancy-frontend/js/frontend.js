@@ -125,6 +125,29 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
         },
         
         
+        set_options: function (widget, options){
+            var $widget = this.$(widget);
+            $widget.data(this.config.appName + '-widget-options', $.extend({}, options));
+        },
+        get_options: function (widget){
+            var $widget = this.$(widget);
+            return $widget.data(this.config.appName + '-widget-options') || {};
+        },
+        create_widget: function(widget, widgetName, options){
+            var $widget = this.$(widget); 
+            if (options)this.set_options(widget, options);
+            if (this.__initialized) {
+                $widget.attr('load-widget', widgetName);
+            }else{
+                $widget.attr('load-' + this.config.appName, widgetName);
+                this.init_app();
+            }
+        },
+        create_plugin: function(widget, widgetName, options){
+            var $widget = this.$(widget);
+            $widget.attr('load-plugin', widgetName);
+            if (options)this.set_options(widget, options);
+        },
 
         _init_app: function(){
             var selector = this.config.selector;
