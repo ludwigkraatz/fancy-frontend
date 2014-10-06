@@ -23,8 +23,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 _create: function() {
                     var $this = this;
-                    this.use_mixin('view');
-                    this.use_mixin('api');
+                    //this.use_mixin('view');
+                    //this.use_mixin('api');
                     this.options.shape = widgetConfig.name_shape_container;
                         this._superApply( arguments );
                     /*if (! this.element.hasClass('dynamic-list')) {
