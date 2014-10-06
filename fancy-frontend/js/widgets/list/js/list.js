@@ -412,8 +412,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     return $this.reload;
                 },
                 
-                reload: function(event){
-                    if (event) {
+                refresh: function(event){
+                    if (event && event.stopImmediatePropagation) {
                         event.stopImmediatePropagation();
                     }
                     
