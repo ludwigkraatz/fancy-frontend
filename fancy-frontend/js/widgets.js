@@ -497,24 +497,29 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             this.options.shape = widgetConfig.name_shape_content;
                         }else
                         if (this.element.filter('body').size()) {
-                            this.options.shape = widgetConfig.name_shape_content;
+                            this.options.shape = widgetConfig.name_shape_page;
                         }else
                         if (this.element.parent('tbody' + widgetConfig.selector_shape_container).size()) {
-                            this.options.shape = widgetConfig.name_shape_content;
+                            this.options.shape = widgetConfig.name_shape_row;
                         }else
                         if (this.element.parents('.' + widgetConfig.name_shape_widget).size()) {
                             this.options.shape = widgetConfig.name_shape_content;
                         }else
                         if (this.element.parents(widgetConfig.selector_shape_container).size()) {
                             this.options.shape = widgetConfig.name_shape_widget;
-                        }                                                        
+                        }else{
+                            this.options.shape = widgetConfig.name_shape_content;
+                        }
                     }
                     if (this.options.shape === null) {
                         this.options.shape = widgetConfig.name_shape_shapeless;
                     }else{
-                        if (this.options.shape == widgetConfig.name_shape_widget && this.element.parents(widgetConfig.selector_shape_container).size()) {
+                        if (this.options.shape == widgetConfig.name_shape_widget && this.element.parents('.'+config.frontend_generateClassName('interaction-dragable-area')).size()) {
                             this.use_mixin('draggable');
                             //  attach to container
+                        }
+                        if ([widgetConfig.name_shape_widget, widgetConfig.name_shape_container, widgetConfig.name_shape_page].indexOf(this.options.shape) != -1) {
+                            this.use_mixin('loading');
                         }
                     }
                     this.element.addClass(this.options.shape)
@@ -530,6 +535,8 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         }else
                         if (this.element.parents(widgetConfig.selector_shape_container).size()) {
                             this.options.size = widgetConfig.name_size_small;
+                        }else{
+                            this.options.size = widgetConfig.name_size_full;
                         }
                     }
                     if (this.options.size === null) {
@@ -571,7 +578,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         }
                     };
 
-                    if (this.element.filter('tr.' + this._widgetConfig.name_shape_content).size()){
+                    if (this.element.filter('.' + this._widgetConfig.name_shape_row).size()){
                         var first = true;
                         this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).each(function() {
                             if (first) {
