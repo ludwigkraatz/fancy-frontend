@@ -12,6 +12,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     headerFields: ['uuid', 'data'],
                     resource: null,
                     allowedRelationships: ['-' + widgetConfig.relationships.child_of, '-' + widgetConfig.relationships.instance_of]
+                    resourceList: null,
+                    source: null,
                     entryTemplate: null
                 },
                 /*
@@ -55,27 +57,67 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     this.$list.on('dynamic-remove-list-entry.dynamic-list.dynamic-widget', this.get_removeEntry_handler(this));
                     this.$list.on('dynamic-unzoom-list-entry.dynamic-list.dynamic-widget', this.get_unzoomEntry_handler(this));
                     //todo: this.element.on('dynamic-notification.dynamic-widget.dynamic-list', fancy_frontend.get_notification_handler(this));
-                    this.element.on('resourcelist-updated', function(event, resourceList){
-                        if (resourceList) {
-                            $this.options.resourceList = resourceList;
-                        }
-                        if ($this.options.resourceList) {$this.options.scope.log.debug('displaying list');
-                            $this.updateConfig();
+                    
+                    this.on('updated', function(event, _data){
+                        if (!!_data && _data.constructor == Array) {
+                            $this.options.source = _data;
+                            $this.options.resourceList = null;
+                        }else if (!!_data) {
+                            $this.options.resourceList = _data;
+                            this.options.source = null;
                         }else{
-                            $this.element.html(''); $this.options.scope.log.debug('emptying list');
+                            $this.options.resourceList = null;
+                            $this.options.source = null;
                         }
-                        
+                        $this.updateConfig();                        
                     });
+                    
+                    if (this.options.resourceList && this.options.resourceList._replaced_with) {
+                        // this is ugly, but because of the sequential processing, when an replacement event is fired while
+                        // ??fixtures are being used??, the listView mixin already the blank object and this widget isn't initialized yet..
+                        this.options.resourceList = this.options.resourceList._replaced_with;
+                    }
+
+                    if (this.options.resourceList != null && this.options.source != null){
+                        this.options.source = null;
+                    }
+                    if (!!$this.options.source) {
+                        this.options.scope._source = $this.options.source;
+                        this.options.scope.$watch('_source', function(){
+                            $this.updateConfig();
+                        })
+                    }
+                    if ($this.options.resourceList) {this.log('register list view event handler', $this.options.resourceList)
+                        $this.options.resourceList.bind('replaced', function(event, resource){
+                            if ($this.options.resourceList !== resource) {
+                                $this.options.resourceList = resource;
+                                $this.updateConfig();
+                            }
+                        })
+                    }
+                    
+                    $this.updateConfig();
+                    /*
                     if ($this.options.scope._resourceList) {
                         this.trigger('resourcelist-updated', [$this.options.scope._resourceList])
+                    }*/
+                    /*function replaceHandler(event_name, args){
+                        this.options.resourceList = args[0];
+                        $this.updateConfig();
                     }
+                    $this.options.resourceList.bind('replaced', replaceHandler);    */
+                    /*if ($this.options.resourceList && !$this.options.resourceList.isBlank()) {
+                        $this.updateConfig();
+                    }*/
                 },
                 
                 updateConfig: function(){
                     var $this = this;
-                    var relationship = this.options.resourceList;
-                        //this.options.lookupObject
-                        relationship.discover({
+                    var resourceList;
+
+                    if (this.options.resourceList && !this.options.resourceList.isBlank()) {
+                        resourceList = this.options.resourceList;
+                        resourceList.discover({
                             callback: function(result){
                                 var content = result.getContent();
                                 // TODO: do this via cores initWidgetStructure
@@ -125,15 +167,16 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         $this.$body.html('error discovering');
                                     }
                                     // show list
-                                    relationship.load(function(result){
-                                            var content = result.getObject().all();//result.getContent();
+                                    resourceList.load(function(result){
+                                            var content = result.getContent();//result.getObject().all();//result.getContent();
+                                            $this.log('list content', content)
                                             $this.options.source = [];
                                             $.each(content, function(index, element){
                                                 $this.options.source.push(element)
                                             })
                                             if ($this.options.source.length == 0) {
-                                                // TODO: make this less static
-                                                $this.trigger(viewMixinEventPrefix + '-show.dynamic-widget.dynamic-dynamicet-widget', ['create', [relationship]]);
+                                                // TODO: make this less static: this.view('create', [resourceList])
+                                                $this.trigger(viewMixinEventPrefix + '-show', ['create', [resourceList]]);
                                             }else{                                                
                                                 $this.goToPage(1);
                                             }
@@ -141,8 +184,13 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                 }
                             }
                         })
-                    
-                      
+                    }else if (this.options.source){
+                        $this.element.html('TODO');
+                        $this.options.scope.log.debug('TODO: implement plain source list');
+                    }else{
+                        $this.element.html('');
+                        $this.options.scope.log.debug('emptying list');
+                    }
                 },
                 
                 getHeaderFields: function(){
