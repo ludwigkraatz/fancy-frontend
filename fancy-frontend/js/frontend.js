@@ -47,6 +47,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             var $this = this;
             this.log_info('init frontendCore' + (coreApp ? ('with coreApp=' + coreApp) : ' as coreApp'))
             this.coreApp = coreApp || this;
+            this.__scope = null;
             
             var $this = this;
             if (settings) {
@@ -625,6 +626,10 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
 
         _load_widget: function ($widget, apply_method, js) {
                 throw Error("not implemented")
+        },
+        
+        setScope: function($scope){
+            this.__scope = $scope;
         },
         
         log: function(text){
