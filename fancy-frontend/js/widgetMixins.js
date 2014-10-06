@@ -50,7 +50,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         return view_body;
                     }
                     
-                    this.element.on(ViewMixin.event_prefix + '-popup.dynamic-widget.dynamic-dynamicet-widget', function MixinCreateHandler(event, name, args){
+                    this.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, args){
                         event.stopPropagation();
                         $this.options.scope.log.debug('popup view:', name);
                         activeBody = $this.$body;
