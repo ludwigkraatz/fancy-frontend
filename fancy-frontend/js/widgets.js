@@ -266,7 +266,9 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     this.element.attr('_uuid', this.uuid)
                     this.apply = function($target){
                         //if (!$target.data('__initialized')) {
-                            return this.options.apply_method.apply(this, arguments)
+                            var ret = this.options.scope.apply.apply(this, arguments);
+                            if ($this.updatedContent)$this.updatedContent();
+                            return ret;
                         //}
                     }
 
