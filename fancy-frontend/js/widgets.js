@@ -277,7 +277,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
 
                     //this.element.off('.dynamic-dynamicet-widget');
                     // init mixin bindings
-                    this.element.on(widgetConfig.name_event_init+widgetConfig.selector_elements_widget, this.get_initWidgetDone_handler(this));
+                    this.on(widgetConfig.name_event_init, this.get_initWidgetDone_handler(this));
 
                     if (this.options.widgetCore) {
                         this.element.on(this.options.widgetCore.name_event_notification + this.options.widgetCore.selector_widgets_core, this.options.widgetCore.get_notification_handler(this));
@@ -289,7 +289,9 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         console.log(this.element);
                         throw Error('no widget name found');
                     }
-                    this.element.addClass(config.frontend_generateClassName(widgetName));
+                    this.element.addClass(config.frontend_generateClassName('object-'+widgetName));
+                    this.element.addClass(config.frontend_generateClassName('instance'));
+                    this.log('init widget', widgetName, this.options.source, this.options.resourceList)
                     
                     this.element.on('asset-loaded.template', function(event, name, response){
                         event.stopPropagation();
