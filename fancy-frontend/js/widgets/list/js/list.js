@@ -51,6 +51,9 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     this.element.html(this.$list);
                     this.$list.off('.dynamic-list', this.get_reload_handler(this));
                     this.$list.addClass(widgetConfig.name_classes_list);
+                    this.$list.addClass(widgetConfig.name_shape_container);
+                    this.$list.addClass(widgetConfig.name_size_full);
+                    this.$list.addClass(config.frontend_generateClassName('instance'));
                     
                     this.$list.on('dynamic-reload-list.dynamic-list.dynamic-widget', this.get_reload_handler(this));
                     this.$list.on('dynamic-zoom-list-entry.dynamic-list.dynamic-widget', this.get_zoomEntry_handler(this));
