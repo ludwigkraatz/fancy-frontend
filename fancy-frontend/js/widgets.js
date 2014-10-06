@@ -142,7 +142,8 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     mixins: [],
                     shape: null,
                     size: null,
-                    closable: false
+                    closable: false,
+                    detachable: true, // TODO: plugin: default = false
                 },
                 mixins: {
                     draggable: mixins.DraggableMixin,
