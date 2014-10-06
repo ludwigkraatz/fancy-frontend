@@ -1,4 +1,7 @@
 @import 'consts';
+@import "toolkit";
+
+
 $color-area-1: #FFF;
 $color-area-1-alpha: 1;
 
@@ -22,21 +25,25 @@ $widget-small-height: 250px;
 $body-width: 100%;
 $body-height: 100%;
 
+$page-width: 800px;
 
 $font-stack: Helvetica, sans-serif;
 $font-size: 12px;
 
-
-$img-loading-40x40: url($image-root+'loading.gif');
+$img-root: $image-root+'fancy-frontend/img/';
+$img-loading-40x40: url($img-root+'loading.gif');
 
 $state: null;
 /*
+ * core
  * |-container
  * |-content == body
  * |--> body.*** = Page 
  * |--> tr.*** = row
- * widget
- * element
+ * |-widget
+ * |-element
+ * |-action
+ * |-popup
  */
 $size: null;
 /*
@@ -48,11 +55,129 @@ $size: null;
  * single
  */
 $zoom: null;
+/*
+ * 
+ */
+
+/*
+ * STRUCTURE
+ * frontendPrefix-object-OBJECT                 => a widget that contains content/functionality
+ * frontendPrefix-instance                      => instance of an object
+ * frontendPrefix-header                        => 
+ * frontendPrefix-body                          => 
+ * frontendPrefix-footer                        => 
+ *
+ * INTERACTION
+ * frontendPrefix-interactive-INTERACTIONable   => interaction can be done
+ * frontendPrefix-interaction-INTERACTION       => is caused by interaction
+ * frontendPrefix-action-ACTION                 => interaction can be triggerd
+ * frontendPrefix-interactables                 => a wrapper for interact(able) elements
+ * frontendPrefix-actions                       => a wrapper for action(able) elements
+ *
+ * DESIGN
+ * frontendPrefix-shape-SHAPE                   => shape (widget, popup, ...)
+ * frontendPrefix-size-SIZE                     => size (small, full, ...)
+ * frontendPrefix-state-STATE                   => deactivated, active, New, error, ...
+ * frontendPrefix-design-ELEMENT                => Icon, arrow-left, background-*, ...
+ *
+ *
+ * ######## known ambiguities #######
+ *
+ *
+ * .state-deactivated .interactable-* === .interactable-*.state-deactivated
+ *
+ *
+ * 
+ */
+
+/***** TOOLS **************/
+@mixin flexbox() {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+
+@mixin flex($values) {
+  -webkit-box-flex: $values;
+  -moz-box-flex:  $values;
+  -webkit-flex:  $values;
+  -ms-flex:  $values;
+  flex:  $values;
+}
+
+@mixin order($val) {
+  -webkit-box-ordinal-group: $val;  
+  -moz-box-ordinal-group: $val;     
+  -ms-flex-order: $val;     
+  -webkit-order: $val;  
+  order: $val;
+}
+
+
+/***** PLACEHOLDER ********/
+
+
+%html {
+    height: 100%;
+}
+
+%border-box {
+    box-sizing: border-box;
+}
+
+%overflow-hidden {
+    overflow: hidden;
+}
+
+%clearfix {
+    /** found: http://cssmojo.com/latest_new_clearfix_so_far/
+    *  For modern browsers
+    */
+   &:before,
+   &:after {
+       content:"";
+       display:table;
+   }
+   &:after {
+       clear:both;
+   }
+   /**
+    * For IE 6/7 (trigger hasLayout)
+    */
+    *zoom:1;
+}
+
+%headerDesign {
+    height: 15px;
+    background: rgba(100, 100, 100, .2);
+    width: 100%;
+    margin: 0px;
+    text-align: center;
+    padding: 0px;
+
+    h3{
+        font-size: 0.8em;
+        margin: 0 auto 0 auto;
+        padding: 0px 5px 0 5px;
+        display: inline;
+        
+    }
+}
+
+
+/***** DESIGN MIXINS ******/
+
+
+// icons in general
 
 @mixin iconMixin {
+    background-size: 10px 10px;
+    display: inline-block;
     height: 10px;
     width: 10px;
-    border: 1px solid gray;
+    background-repeat: no-repeat;
 }
 
 @mixin pseudoIconMixin {
@@ -73,87 +198,294 @@ $zoom: null;
     margin-right: 15px;
 }
 
+
+// specific icons
+
+@mixin iconMixin_loading{
+    @include iconMixin;
+    background-image: url($img-root+'icons/loading.gif');
+}
+
+@mixin iconMixin_add{
+    @include iconMixin;
+    background-image: url($img-root+'icons/plus25.svg');
+    background-size: 15px 15px;
+    background-position: -2px -2px;
+}
+
+@mixin iconMixin_close{
+    @include iconMixin;
+    background-image: url($img-root+'icons/x1.svg')
+}
+
+@mixin iconMixin_grid{
+    @include iconMixin;
+    background-image: url($img-root+'icons/slideshows.svg')
+}
+
+@mixin iconMixin_reload{
+    @include iconMixin;
+    background-image: url($img-root+'icons/refresh27.svg')
+}
+
+@mixin iconMixin_check{
+    @include iconMixin;
+    background-image: url($img-root+'icons/check34.svg');
+    background-size: 16px 16px;
+    background-position: -3px -3px;
+}
+
+@mixin iconMixin_inspect{
+    @include iconMixin;
+    background-image: url($img-root+'icons/gps17.svg')
+}
+
+@mixin iconMixin_info{
+    @include iconMixin;
+    background-image: url($img-root+'icons/info2.svg')
+}
+
+@mixin iconMixin_warning{
+    @include iconMixin;
+    background-image: url($img-root+'icons/exclamation29.svg')
+}
+
+@mixin iconMixin_error{
+    @include iconMixin;
+    background-image: url($img-root+'icons/x1.svg')
+}
+
+@mixin iconMixin_event{
+    @include iconMixin;
+    background-image: url($img-root+'icons/facebook30.svg');
+    background-size: 11px 11px;
+    background-position: -1px 0;
+}
+
+@mixin iconMixin_debug{
+    @include iconMixin;
+    background-image: url($img-root+'icons/debug4.svg');
+    background-size: 16px 16px;
+    background-position: -3px -3px;
+}
+
+@mixin iconMixin_highlight{
+    @include iconMixin;
+    background-image: url($img-root+'icons/border.svg');
+    background-size: 16px 16px;
+    background-position: -3px -3px;
+}
+
+
+// interaction mixins
+
+@mixin interactableMixin {
+}
+
+@mixin editableMixin {
+    @include interactableMixin;
+}
+
 @mixin clickableMixin {
+    @include interactableMixin;
     cursor: pointer;
 }
 
-@mixin headerDesign {
-          height: 15px;
-          background: rgba(100, 100, 100, .2);
-          width: 100%;
-          margin: 0px;
-          text-align: center;
-          padding: 0px;
-          border-top-left-radius: 15px;
-          border-top-right-radius: 15px;
-          
-          h3{
-              font-size: 0.8em;
-              margin: 0 auto 0 auto;
-              padding: 0px 5px 0 5px;
-              display: inline;
-              
-          }
-          
+@mixin actionMixin {
+    @include clickableMixin;
+}
+
+@mixin actionsMixin {
+    .#{$frontend-prefix}extended {
+        display: none;
+    }
+}
+
+@mixin revealMixin {
+
+  .#{$frontend-prefix}interactive-revealable {
+    display: inline-block;
+  }
+    
+  .#{$frontend-prefix}instance {
+      box-shadow: 0px 0px 1pt 1pt purple;
+      border-color: purple;
+      &:hover {
+          box-shadow: 0px 0px 1pt 1pt blue;
+          border-color: blue;
+      }
+      
+  }
+}
+
+@mixin visibleByState($states){
+    /*.#{$frontend-prefix}state-basic,
+    .#{$frontend-prefix}state-advanced,
+    .#{$frontend-prefix}state-expert,*/
+    .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-basic,
+    .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-advanced,
+    .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-expert{
+        display: none;
+    }
+    
+    .#{$frontend-prefix}interactive-visible-by-state[value=#{$frontend-prefix}state-basic],
+    .#{$frontend-prefix}interactive-visible-by-state[value=#{$frontend-prefix}state-advanced],
+    .#{$frontend-prefix}interactive-visible-by-state[value=#{$frontend-prefix}state-expert]{
+       position: absolute;
+       top: -9999px;
+       left: -9999px;
+       /* TODO: opacity and on top of label */
+    }
+    
+    /*input[type=radio][value=#{$frontend-prefix}state-basic]:checked + .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-basic{
         
-        .#{$frontend-prefix}close{
-            @include iconMixin;
-            @include clickableMixin;
-            z-index:10002;
-            margin-right: 15px;
-            margin-top: 3px;
-            float: right;
-        }
-        .#{$frontend-prefix}reload{
-            @include iconMixin;
-            @include clickableMixin;
-            z-index:10002;
-            margin-left: 15px;
-            margin-top: 3px;
-            float: left;
-        }
+    }*/
+    
+    input.#{$frontend-prefix}interactive-visible-by-state + label {
+        cursor: pointer;
+    }
+    input.#{$frontend-prefix}interactive-visible-by-state:checked + label {
+        font-weight: bold;
+    }
+    input.#{$frontend-prefix}interactive-visible-by-state:focus + label {
+        outline: 1px solid blue;
+    }
+    /*
+    input[type=radio][value=#{$frontend-prefix}state-basic]:checked  + label+ input + label + input + label +
+        .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-basic,
         
-        > form{
-            display: inline;
-            position: absolute;
-            right: 40px;
-            > input{
-                  margin: 1px;
-                  background: rgba(255, 255, 255, 0.6);
-                  color: black;
-                  border: none;
-                  padding: 0px;
-            }
-        }
+    input[type=radio][value=#{$frontend-prefix}state-advanced]:checked + label + input + label +
+        .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-advanced,
+        
+    input[type=radio][value=#{$frontend-prefix}state-expert]:checked + label +
+        .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-expert */
+    .#{$frontend-prefix}interactive-visible-by-state[value=#{$frontend-prefix}state-basic]:checked  ~ .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-basic,
+    .#{$frontend-prefix}interactive-visible-by-state[value=#{$frontend-prefix}state-advanced]:checked ~ .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-advanced,
+    .#{$frontend-prefix}interactive-visible-by-state[value=#{$frontend-prefix}state-expert]:checked ~ .#{$frontend-prefix}interaction-visible-by-state .#{$frontend-prefix}state-expert {
+        display: block;
+    }
+    
+    /* this is a webkit CSS2 "+" selector bug fix*/
+    /*
+    input[type=radio][value=#{$frontend-prefix}state-basic]:checked + .#{$frontend-prefix}interaction-visible-by-state:nth-child(n) + .#{$frontend-prefix}state-basic,
+    input[type=radio][value=#{$frontend-prefix}state-advanced]:checked + .#{$frontend-prefix}interaction-visible-by-state:nth-child(n) + .#{$frontend-prefix}state-advanced,
+    input[type=radio][value=#{$frontend-prefix}state-expert]:checked + .#{$frontend-prefix}interaction-visible-by-state:nth-child(n) + .#{$frontend-prefix}state-expert {
+        display: block;
+    }*/
 }
 
 
-@mixin coreWrapperDesign {
-    overflow: hidden;
+// design elements
+
+
+@mixin hasActionHeader {
+    > .#{$frontend-prefix}header {
+        @extends headerDesign;
+        display: none;
+    }
+}
+
+@mixin hasHeader {
+    > .#{$frontend-prefix}header {
+        @extends headerDesign;
+        display: block;
+    }
+    > thead.#{$frontend-prefix}header {
+        display: table-row;
+    }
+}
+
+@mixin spacingMixin($padding: false) {
+    @if $padding {
+        padding: 15px 5px 5px 15px;
+        margin: 0;
+    } @else {
+        margin: 15px 5px 5px 15px;
+        padding: 0;
+    }
+}
+
+@mixin clearfixMixin{
+    @extend %clearfix;
+}
+
+@mixin shapeMixin{
+    @extend %border-box;
+    @extend %overflow-hidden;
+}
+
+//@mixin sizeMixin{
+//}
+
+
+@mixin instanceDesign {
+    &.#{$frontend-prefix}state-loading > .#{$frontend-prefix}header:before{
+        @include iconMixin_loading;
+        content: '';
+    }
+    border: 1px solid transparent;
+}
+
+@mixin containerDesign {
+    @include shapeMixin;
+    @include hasHeader;
+    height: 100%;
+    width: 100%;
+}
+
+@mixin flexContainerDesign {
+    @include shapeMixin;
+    @include flexbox();
+    @include hasHeader;
+    
+    .#{$frontend-prefix}body > .#{$frontend-prefix}instance,
+    > .#{$frontend-prefix}instance >  {
+        @include item();
+    }
+}
+
+@mixin rowDesign {
+    @include shapeMixin;
+    .#{$frontend-prefix}header .#{$frontend-prefix}title {
+        display: none;
+    }
+}
+
+@mixin contentDesign {
+    @include shapeMixin;
+    @include hasActionHeader;
+    > .#{$frontend-prefix}header {
+        margin: 0;
+        
+        > .#{$frontend-prefix}title {
+            display: none
+        }
+    }
+}
+
+@mixin fullPageDesign {
+    @include shapeMixin;
+    @include spacingMixin(true);
+    @include hasActionHeader;
+    width: 100%;
+}
+
+@mixin centeredPageDesign {
+    @include shapeMixin;
+    @include hasActionHeader;
+    height: 100%;
+    width: $page-width;
+    margin: 0 auto;
 }
 
 @mixin widgetDesign {
-    @include coreWrapperDesign;
+    @include spacingMixin;
+    @include shapeMixin;
+    @include hasActionHeader;
     font: 100% $font-stack;
     color: $color-font-default;
-    top: 0px;
-    margin: 15px 5px 5px 15px;
-    padding: 0px 0px 0px 0px;
-    box-shadow: 0px 0px 2px 2px #e6e6e6;
-    border-radius: 15px;
-    min-height: 100px;
-    background: rgba(200, 200, 200, .5);
-
-    &.ui-draggable {
-        display: inline-block;
-        
-        > .#{$frontend-prefix}header {
-            cursor: move;
-        }
-    }
 
     > .#{$frontend-prefix}header {
-        @include headerDesign; 
       }
 
     > .#{$frontend-prefix}body {
@@ -165,7 +497,6 @@ $zoom: null;
         }
         
     }
-    
 }
 
 @mixin modalMaskDesign {
@@ -198,7 +529,6 @@ $zoom: null;
     }
 
     > .#{$frontend-prefix}header {
-        @include headerDesign;
         background-color: #f2f2f2;
         border: 1px solid #dadada;
         height: 30px;
@@ -219,3 +549,9 @@ $zoom: null;
         box-sizing: border-box;
     }
 }
+
+
+/***** STRUCTURAL MIXINS ******/
+
+
+// none

@@ -1,110 +1,123 @@
 @import 'consts';
 @import 'design';
+@import 'normalize';
 
-.#{$frontend-prefix}frontend-warning {
+
+/*
+ *
+ * here is the DEFAULT design
+ *
+ */
+
+/***** STRUCTURAL CLASSES ******/
+
+html {
+    @extend %html;
+}
+
+//
+
+.#{$frontend-prefix}instance {
+    @include instanceDesign;
+}
+
+.#{$frontend-prefix}shape-shapeless, 
+.#{$frontend-prefix}size-sizeless {
     border: 1px double red;
 }
 
-.#{$frontend-prefix}stateless, 
-.#{$frontend-prefix}sizeless {
-    @extend .#{$frontend-prefix}frontend-warning;
+.#{$frontend-prefix}size-small {
+    width: 250px;
 }
 
-.#{$frontend-prefix}widget {
+.#{$frontend-prefix}size-full {
+    width: 100%;
+    height: 100%;
+}
+
+.#{$frontend-prefix}shape-page {
+    @include centeredPageDesign;
+}
+
+.#{$frontend-prefix}shape-content {
+    @include contentDesign;
+}
+
+.#{$frontend-prefix}shape-row {
+    @include rowDesign;
+}
+
+.#{$frontend-prefix}shape-container {
+    @include containerDesign;
+}
+
+.#{$frontend-prefix}shape-element {
+
+}
+
+.#{$frontend-prefix}shape-widget {
     @include widgetDesign;
 }
-.#{$frontend-prefix}popup-window {
+
+.#{$frontend-prefix}shape-action {
+
+}
+
+.#{$frontend-prefix}shape-popup {
     @include popupDesign;
 }
 
 
-.#{$frontend-prefix}entry {
-    .#{$frontend-prefix}header {
-        display: none;
-    }
+/*  ACTIONS  */
+
+.#{$frontend-prefix}interaction-reveal {
+      @include revealMixin;
 }
 
-.#{$frontend-prefix}list {
-    width: 100%;
-
-    .#{$frontend-prefix}header {
+.#{$frontend-prefix}instance {
+    form {
+        @include actionsMixin;
     }
+    
+    fieldset {
+        border: 0px;
+    }
+    
+    input {
+        @include editableMixin;
+    }
+    
 }
 
-  
-.#{$frontend-prefix}column {
-      height: 100%;
-      width: 250px;
-      float: left;
-      padding-bottom: 100px;
-  }
-
-  
-  fieldset {
-      border: 0px;
-  }
-  
-  
-  
-  .#{$frontend-prefix}editable {
-    border: 1px solid grey;
-    border-radius: 0 0 15px 15px;
-    background: rgba(200, 200, 100, .5);
-    min-height: 90px;
-    margin: 1px;
-  }
-  
-  .#{$frontend-prefix}clearer {
-    clear: both;
-  }
-  
-  
-  .ui-selectable:hover {
-    background: rgba(250, 250, 250, .2);
-  }
-  .ui-selectable:active {
-    background: rgba(250, 250, 250, .7);
-  }
-  
-  
-
-.#{$frontend-prefix}content {
-    @include coreWrapperDesign;
-    > .#{$frontend-prefix}header {
-        margin: 0;
-        
-        > .#{$frontend-prefix}title {
-            display: none
+.#{$frontend-prefix}header {
+    form{
+        display: inline;
+        position: absolute;
+        right: 40px;
+        input{
+              margin: 1px;
+              background: rgba(255, 255, 255, 0.6);
+              color: black;
+              border: none;
+              padding: 0px;
         }
     }
 }
 
-.#{$frontend-prefix}container {
-    @include coreWrapperDesign;
-  .#{$frontend-prefix}widget {
-    &.#{$frontend-prefix}small {
-        width: 250px;
-      }
-
-    .#{$frontend-prefix}body {
-      /*overflow: scroll;*/
-    }
-  }
-
-  .#{$frontend-prefix}entry {
-    &.#{$frontend-prefix}small {
-        width: 250px;
-      }
-  }
+.#{$frontend-prefix}interactive-hoverable:hover .#{$frontend-prefix}interaction-tooltip {
+    display:inline;
 }
 
-.#{$frontend-prefix}modal-mask {
-    @include modalMaskDesign;
+.#{$frontend-prefix}interactive-clickable {
+    @include clickableMixin;
+}
+
+.#{$frontend-prefix}interactive-editable {
+    @include editableMixin;
 }
 
 
-
-.#{$frontend-prefix}tooltip {
+.#{$frontend-prefix}interaction-tooltip {
     z-index:10;
     display:none;
     padding:14px 20px;
@@ -154,6 +167,105 @@
     }
 
 }
-.#{$frontend-prefix}extra-info:hover .#{$frontend-prefix}tooltip {
-    display:inline;
+
+
+/*  DESIGN   */
+/*
+  
+.#{$frontend-prefix}column {
+      height: 100%;
+      width: 250px;
+      float: left;
+      padding-bottom: 100px;
+  }
+
+  
+  
+  
+  .#{$frontend-prefix}action-editable {
+    border: 1px solid grey;
+    border-radius: 0 0 15px 15px;
+    background: rgba(200, 200, 100, .5);
+    min-height: 90px;
+    margin: 1px;
+  }
+  
+  .#{$frontend-prefix}design-clearer {
+    clear: both;
+  }
+  
+  
+  .ui-selectable:hover {
+    background: rgba(250, 250, 250, .2);
+  }
+  .ui-selectable:active {
+    background: rgba(250, 250, 250, .7);
+  }
+  
+
+  */
+
+
+table.#{$frontend-prefix}instance {
+    border-collapse: collapse;
 }
+
+
+.#{$frontend-prefix}design-clearfix {
+    @include clearfixMixin;
+}
+
+.#{$frontend-prefix}design-modal-mask {
+    @include modalMaskDesign;
+}
+
+.#{$frontend-prefix}action-close{
+    @include iconMixin_close;
+    @include actionMixin;
+    margin-right: 15px;
+    margin-top: 3px;
+    float: right;
+}
+
+.#{$frontend-prefix}action-grid{
+    @include iconMixin_grid;
+    @include actionMixin;
+    margin-left: 15px;
+    margin-top: 3px;
+    float: left;
+}
+
+.#{$frontend-prefix}action-reload{
+    @include iconMixin_reload;
+    @include actionMixin;
+    margin-left: 15px;
+    margin-top: 3px;
+    float: left;
+}
+.#{$frontend-prefix}action-add{
+    @include iconMixin_add;
+    @include actionMixin;
+}
+.#{$frontend-prefix}action-check{
+    @include iconMixin_check;
+    @include actionMixin;
+    margin-left: 5px;
+    margin-top: 3px;
+    float: left;
+}
+.#{$frontend-prefix}action-highlight{
+    @include iconMixin_highlight;
+    @include actionMixin;
+    margin-left: 5px;
+    margin-top: 3px;
+    float: left;
+}
+.#{$frontend-prefix}action-inspect{
+    @include iconMixin_inspect;
+    @include actionMixin;
+    margin-right: 15px;
+    margin-top: 3px;
+    float: right;
+}
+
+
