@@ -137,7 +137,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         // TODO: get this event_prefix better!!
                                         var viewMixinEventPrefix = $this.mixins.view.event_prefix;
                                         if (content['actions']['POST'] !== undefined) {
-                                            var createLink = $('<a href="" class="">+</a>');
+                                            var createLink = $('<a href="#" class="'+config.frontend_generateClassName('action-add')+'"></a>');
                                             $this.$header.find(widgetConfig.selector_elements_header).append(createLink);
                                             createLink.click(function(event){
                                                 event.preventDefault();
