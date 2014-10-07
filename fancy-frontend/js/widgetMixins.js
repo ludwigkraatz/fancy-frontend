@@ -146,7 +146,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         var ApiMixin = {
             init: function(mixinConfig){
                 this.api = {};
-                //this.api.object = this.options.widgetCore.endpoint.ajax.access('object')
+                this.api.object = this.options.scope.object;
             }
         }
         mixins.ApiMixin = ApiMixin;
