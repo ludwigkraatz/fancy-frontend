@@ -9,7 +9,7 @@ define(['fancyPlugin!widget:fancy-frontend:resource_interface', 'fancyPlugin!fan
                 if ((this.options.activeView == 'detail') || (!this.options.activeView && this.options.scope['__target'] == 'uuid')) {// TODO
                     this.trigger(widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['detail']);
                 }else if ((this.options.activeView == 'list') || (!this.options.activeView && this.options.scope['__target'] == 'relationship')) {
-                    this.trigger(widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['list', ['-' + widgetConfig.relationships.child_of]]);
+                    this.trigger(widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['list', {relationship: '-' + widgetConfig.relationships.child_of}]);
                 }else {
                     throw Error('unrecognized view');
                 }

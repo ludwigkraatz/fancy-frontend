@@ -148,7 +148,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                                 }else{
                                                     view = 'show';
                                                 }
-                                                $this.element.trigger(viewMixinEventPrefix + '-' + view, ['create', [resourceList]]);
+                                                $this.element.trigger(viewMixinEventPrefix + '-' + view, ['create', {relationship: resourceList}]);
                                             })
                                         }
                                         if ($this.options.allowedRelationships && $this.options.allowedRelationships.length > 1) {
@@ -163,7 +163,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                             }
                                             selectRelationship.html(output)
                                             selectRelationship.change(function(event){
-                                                $this.trigger(viewMixinEventPrefix + '-show', ['list', [$($this).val()]]);
+                                                $this.trigger(viewMixinEventPrefix + '-show', ['list', {relationship: $($this).val()}]);
                                             })
                                         }
                                     }else{
@@ -180,7 +180,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                             })
                                             if ($this.options.source.length == 0) {
                                                 // TODO: make this less static: this.view('create', [resourceList])
-                                                $this.trigger(viewMixinEventPrefix + '-show', ['create', [resourceList]]);
+                                                $this.trigger(viewMixinEventPrefix + '-show', ['create', {relationship: resourceList}]);
                                             }else{                                                
                                                 $this.goToPage(1);
                                             }

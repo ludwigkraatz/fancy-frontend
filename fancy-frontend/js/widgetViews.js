@@ -5,8 +5,9 @@ define(['fancyPlugin!jquery'], function($){
             destroy: function(){
                 this.$body.list('destroy');
             },
-            init: function(_data){
-                var $this = this,
+            init: function(mixinConfig){
+                var _data = mixinConfig.data ? (mixinConfig.data.source || mixinConfig.data.relationship) : undefined,
+                    $this = this,
                     $body = this.$body,
                     resourceList,
                     source = null,
@@ -15,7 +16,7 @@ define(['fancyPlugin!jquery'], function($){
 
                 if (!!_data && _data.constructor == Array) {
                     sources = _data;
-                }else if (!!_data) {
+                }else if (!!_data) { // string
                     _relationship = _data;
                     $body.attr(create_as + '-reference', _relationship);
                     if (this.options.scope._resource && this.options.scope._relationships[_relationship] === undefined) {
@@ -59,7 +60,7 @@ define(['fancyPlugin!jquery'], function($){
         DetailView: {
             destroy: function(){
             },
-            init: function(){
+            init: function(mixinConfig){
                 var $this = this;
                 if (this.options.resource && !this.options.resource.isBlank()) {this.log('found ', this.options.resource)
                     this.options.resource.load(function (result){
@@ -105,8 +106,9 @@ define(['fancyPlugin!jquery'], function($){
         },
         
         CreateView: {
-            init: function(relationship){
-                var $this = this;
+            init: function(mixinConfig){
+                var relationship = mixinConfig.data.relationship,
+                    $this = this;
                 var $body = this.$body;
                 //var relationship = this.options.resource.get('relationship', _relationship);
                 if (relationship) {

@@ -5,7 +5,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
 
         var ViewMixin = {
                 event_prefix: 'dynamic-view',
-                init: function(){
+                init: function(mixinConfig){
                     
                     // setup view infrastructure
                     this.setupMixinHandlers(ViewMixin.event_prefix, this.views);
@@ -42,7 +42,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     this._$body.wrapInner($content);
                     var $this = this;
                     
-                    function setViewBody(name, args) {
+                    function setViewBody(name, data) {
                         var view_body = $this._$body.find('[data-view-name='+name+']');
                         if (view_body.size()==0 || view_body.attr('data-initial-view')) {
                             if (view_body.size()==0) {
@@ -56,21 +56,21 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                             $this.trigger(ViewMixin.event_prefix + '-removed', [name]);
                         }
                         $this.$body = $this._$body.children('[data-view-name='+ name +']');
-                        $this.trigger(ViewMixin.event_prefix + '-found', [name, args]);
+                        $this.trigger(ViewMixin.event_prefix + '-found', [name, data]);
                         $this.$body.attr('data-active', true);
                         return view_body;
                     }
                     
-                    this.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, args){
+                    this.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
                         $this.options.scope.log.debug('popup view:', name);
                         activeBody = $this.$body;
-                        if (typeof args === 'function') {
-                            var callback = args;
-                            args = {
+                        if (typeof data === 'function') {
+                            var callback = data;
+                            data = {
                             };
                         }
-                        view_body = setViewBody(name, args);
+                        view_body = setViewBody(name, data);
                         $this.popUp(function(){
                             view_body.appendTo($this._$body);
                             if (! $this.$body.is(view_body)) {
@@ -83,12 +83,12 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         $this.$body = activeBody;
                     });
                     
-                    this.element.on(ViewMixin.event_prefix + '-show.dynamic-widget.dynamic-dynamicet-widget', function MixinCreateHandler(event, name, args){
+                    this.element.on(ViewMixin.event_prefix + '-show.dynamic-widget.dynamic-dynamicet-widget', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
-                        $this.options.scope.log.debug('show view:', name, args);
+                        $this.options.scope.log.debug('show view:', name, data);
                         $this._$body.find('[data-active=true]').removeAttr('data-active');
                         // TODO: show loading
-                        setViewBody(name, args);
+                        setViewBody(name, data);
                     });
                     //this.$body = this.$activeView.find('.body');
                 },
@@ -97,7 +97,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         
 
         var DraggableMixin = {
-            init: function(){
+            init: function(mixinConfig){
                 var $this = this;
                 this.element.css('position', 'absolute');
                 this.element.css('top', this.element.parent().position().top + 15);
@@ -116,7 +116,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         
 
         var DetachableMixin = {
-            init: function(){
+            init: function(mixinConfig){
                 var $this = this;
                 this.element.on('dragstart', function(event){
                     if (event.ctrlKey){
@@ -138,13 +138,13 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         mixins.DetachableMixin = DetachableMixin;
 
         var NotificationMixin = {
-            init: function(){
+            init: function(mixinConfig){
                 this.element.on('dynamic-notification.dynamic-widget.dynamic-dynamicet-widget', this.options.widgetCore.get_notification_handler(this));
             }
         }
         
         var ApiMixin = {
-            init: function(){
+            init: function(mixinConfig){
                 this.api = {};
                 //this.api.object = this.options.widgetCore.endpoint.ajax.access('object')
             }
@@ -152,7 +152,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         mixins.ApiMixin = ApiMixin;
 
         var ResourceMixin = {
-            init: function(){
+            init: function(mixinConfig){
                 var $this = this;/*
                 function initResource() {
                     if ($this.options.scope._resource) {
@@ -254,7 +254,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         };
         mixins.ResourceMixin = ResourceMixin;
         var TOSMixin = {
-            init: function(){
+            init: function(mixinConfig){
                 
                     this.element.on('dynamic-tos-denied.dynamic-widget.dynamic-dynamicet-widget', this.get_ToSDenied_handler(this));
             },
@@ -267,7 +267,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             };
         var LoadingMixin = {
             
-                init: function(){                    
+                init: function(mixinConfig){                    
                     this.$loading = null;
                     this.$loading_toggle = null;
                     //this.element.on('dynamic-loading-widget-failed.dynamic-widget.dynamic-dynamicet-widget', mixins.LoadingMixin.get_initFailed_handler(this));

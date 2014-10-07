@@ -405,19 +405,29 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             throw Error('Mixin "' + name + '" not found for event prefix "'+ event_prefix + '"');
                         }
                     }
-                    this.on(event_prefix + '-found', function MixinCreateHandler(event, name, args){
+                    this.on(event_prefix + '-found', function MixinCreateHandler(event, name, data){
                         event.stopImmediatePropagation();
-                        $this.options.scope.log.debug('adding ' + event_prefix + ':', name, args);
+                        $this.options.scope.log.debug('adding ' + event_prefix + ':', name, data);
                         checkMixin(name);
-                        mixin_dict[name].init.apply($this, args)
+                        if (mixin_dict[name].init) {
+                            var config = {
+                                name: name,
+                                data: data !== undefined ? data : {}
+                            }
+                            mixin_dict[name].init.call($this, config)
+                        }
                         return false
                     });
-                    this.on(event_prefix + '-removed', function MixinDestroyHandler(event, name, args){
+                    this.on(event_prefix + '-removed', function MixinDestroyHandler(event, name, data){
                         event.stopImmediatePropagation();
                         $this.options.scope.log.debug('removing ' + event_prefix + ':', name);
                         checkMixin(name);
                         if (mixin_dict[name].destroy) {
-                            mixin_dict[name].destroy.apply($this, args)
+                            var config = {
+                                name: name,
+                                data: data !== undefined ? data : {} 
+                            }
+                            mixin_dict[name].destroy.call($this, config)
                         }
                         return false
                     });
