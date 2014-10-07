@@ -233,6 +233,13 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }
                     this._templates.push(name);
                 },
+                
+                get_active_template: function(){
+                    if (this._templates.length > 0) {
+                        return this._templates.slice(-1)[0]
+                    }
+                    return null;
+                },
 
                 use_lib: function(name){
                     if (this._libs === null) {
@@ -336,7 +343,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         css: this._css ? this._css.reverse() : [],
                         libs: this._libs ? this._libs.reverse() : [],
                         locales: this._locales ? this._locales.reverse() : [],
-                        templates: this._templates ? this._templates.reverse() : [],
+                        templates: this.options.content ? [] : (this._templates ? this._templates.reverse() : []),
                         fixtures: this._fixtures ? this._fixtures.reverse() : [],
                     }
                     if (!dependencyConfig.scope) {

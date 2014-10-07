@@ -131,6 +131,22 @@ define(['fancyPlugin!jquery'], function($){
                     $body.html('see log');
                 }
             }
+        },
+        
+        TemplateView: {
+            init: function(mixinConfig){
+                var $this = this;
+                var $body = this.$body;
+                template = this.get_active_template();
+                
+                if (!template) {
+                    this.log('(error)', 'invalid template');
+                    return
+                }
+                this.loadDependencies({
+                    templates: [template + '.' + mixinConfig.name]
+                })
+            }
         }
     }
     
