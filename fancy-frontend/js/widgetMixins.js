@@ -147,6 +147,11 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             init: function(mixinConfig){
                 this.api = {};
                 this.api.object = this.options.scope.object;
+                this.api.get = ApiMixin._getApiAccess.bind(this);
+            },
+            
+            _getApiAccess: function(){
+                return this.options.scope._accessApiEndpoint.apply(null, arguments)
             }
         }
         mixins.ApiMixin = ApiMixin;
