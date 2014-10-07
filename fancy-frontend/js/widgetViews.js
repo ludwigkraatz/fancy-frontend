@@ -125,7 +125,7 @@ define(['fancyPlugin!jquery'], function($){
                     })
                 }else{
                     //TODO
-                    $this.error('cannot create resource if not defined with relationship. YET')
+                    $this.log('(error)', 'cannot create resource if not defined with relationship. YET')
                     $body.html('see log');
                 }
             }
