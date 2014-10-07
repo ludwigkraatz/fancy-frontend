@@ -15,7 +15,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 child_of: '124',
             }
             widgetConfig.mixins = mixins;
-            widgetConfig.view = views;
+            widgetConfig.views = views;
             /* names */
 
             /* ->events */
