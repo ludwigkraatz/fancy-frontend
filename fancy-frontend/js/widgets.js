@@ -338,7 +338,9 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         locales: this._locales ? this._locales.reverse() : [],
                         templates: this._templates ? this._templates.reverse() : [],
                         fixtures: this._fixtures ? this._fixtures.reverse() : [],
-                        scope: this.options.scope
+                    }
+                    if (!dependencyConfig.scope) {
+                        dependencyConfig.scope = this.options.scope
                     }
                     if (!dependencyConfig.callback) {
                         dependencyConfig.callback = function(type, name, response){
