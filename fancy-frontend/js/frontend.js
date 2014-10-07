@@ -615,6 +615,10 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             }
             this.links = links
         },
+        
+        load_dependencies: function(){
+                throw Error("not implemented")
+        },
 
         initEndpoints: function(){
                 throw Error("not implemented")

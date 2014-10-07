@@ -315,28 +315,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     
                     
                     // start loading
-                    this.options.widgetCore.load_assets({
-                        css: this._css ? this._css.reverse() : [],
-                        libs: this._libs ? this._libs.reverse() : [],
-                        locales: this._locales ? this._locales.reverse() : [],
-                        templates: this._templates ? this._templates.reverse() : [],
-                        fixtures: this._fixtures ? this._fixtures.reverse() : [],
-                        callback: function(type, name, response){
-                            $this.trigger('asset-loaded.'+type, [name, response]);
-                            /*if (type == 'fixture' && $this.options.scope.__widgetResource) {
-                                $this.options.scope.updateResource({force: false});
-                                //*for (var key in response) {
-                                    if (response[key].uuid == $this.options.scope.__widgetResource) {
-                                        $this.options.scope._resource.fromFixture(response[key])
-                                        $this.options.scope.$apply();
-                                    }
-                                }//*
-                                
-                            }*/
-                        },
-                        scope: this.options.scope
-                    });
-                    
+                    this.loadDependencies();
                     this.initWidgetStructure();
                     this.element.trigger(widgetConfig.name_event_preInit + '');
                     
@@ -349,6 +328,34 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }
                     
                     this.setupContent()
+                },
+                
+                loadDependencies: function(dependencyConfig){
+                    var $this = this;
+                    dependencyConfig = dependencyConfig || {
+                        css: this._css ? this._css.reverse() : [],
+                        libs: this._libs ? this._libs.reverse() : [],
+                        locales: this._locales ? this._locales.reverse() : [],
+                        templates: this._templates ? this._templates.reverse() : [],
+                        fixtures: this._fixtures ? this._fixtures.reverse() : [],
+                        scope: this.options.scope
+                    }
+                    if (!dependencyConfig.callback) {
+                        dependencyConfig.callback = function(type, name, response){
+                            $this.trigger('asset-loaded.'+type, [name, response]);
+                            /*if (type == 'fixture' && $this.options.scope.__widgetResource) {
+                                $this.options.scope.updateResource({force: false});
+                                //*for (var key in response) {
+                                    if (response[key].uuid == $this.options.scope.__widgetResource) {
+                                        $this.options.scope._resource.fromFixture(response[key])
+                                        $this.options.scope.$apply();
+                                    }
+                                }//*
+                                
+                            }*/
+                        };
+                    }
+                    this.options.widgetCore.load_dependencies(dependencyConfig);
                 },
                 
                 popUp: function(callback){
