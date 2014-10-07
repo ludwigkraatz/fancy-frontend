@@ -26,7 +26,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
 
                 setDefaultView: function(){
                     if (this.options.activeView) {
-                        this.trigger(widgetConfig.mixins.ViewMixin.event_prefix + '-show', [this.options.activeView]);
+                        this.trigger(this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', [this.options.activeView]);
                     }else {
                         this.log('no active view defined')
                     }

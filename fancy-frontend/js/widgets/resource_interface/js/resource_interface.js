@@ -1,6 +1,5 @@
 define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], function($, config){
     $(function() {
-        widgetConfig = $[config.apps['fancy-frontend'].defaults_namespace]._widgetConfig;
 
         $.widget( config.apps['fancy-frontend'].namespace + '.resource_interface', $[config.apps['fancy-frontend'].namespace].core, {
             _create: function(){          

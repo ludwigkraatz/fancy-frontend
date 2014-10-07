@@ -207,7 +207,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     if (this._used_mixins.indexOf(mixin) == -1) {
                         this._used_mixins.push(mixin)
                         if (this.element.data('__initialized')) {
-                            this.trigger(widgetConfig.name_event_mixin + '-found', [mixin]);
+                            this.trigger(this._widgetConfig.name_event_mixin + '-found', [mixin]);
                             
                         }
                     }
@@ -284,7 +284,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
 
                     //this.element.off('.dynamic-dynamicet-widget');
                     // init mixin bindings
-                    this.on(widgetConfig.name_event_init, this.get_initWidgetDone_handler(this));
+                    this.on(this._widgetConfig.name_event_init, this.get_initWidgetDone_handler(this));
 
                     if (this.options.widgetCore) {
                         this.element.on(this.options.widgetCore.name_event_notification + this.options.widgetCore.selector_widgets_core, this.options.widgetCore.get_notification_handler(this));
@@ -324,13 +324,13 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     // start loading
                     this.loadDependencies();
                     this.initWidgetStructure();
-                    this.element.trigger(widgetConfig.name_event_preInit + '');
+                    this.element.trigger(this._widgetConfig.name_event_preInit + '');
                     
                     // init mixins
-                    this.setupMixinHandlers(widgetConfig.name_event_mixin, this.mixins);
+                    this.setupMixinHandlers(this._widgetConfig.name_event_mixin, this.mixins);
                     if (this._used_mixins) {
                         $.each(this._used_mixins.reverse(), function(index, mixin){
-                            $this.trigger(widgetConfig.name_event_mixin + '-found', [mixin]);
+                            $this.trigger($this._widgetConfig.name_event_mixin + '-found', [mixin]);
                         });
                     }
                     
@@ -443,12 +443,12 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 },
                 
                 start_loading: function(){
-                    this.element.trigger(widgetConfig.name_event_loading);
+                    this.element.trigger(this._widgetConfig.name_event_loading);
                     
                 },
                 
                 finished_loading: function(){
-                    this.element.trigger(widgetConfig.name_event_loadingFinished);
+                    this.element.trigger(this._widgetConfig.name_event_loadingFinished);
                     
                 },
                 
@@ -473,7 +473,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             "url": this.options.widget_url + '/',
                             "data": data,
                             "done": function(response, text, xhr){
-                                            $this.trigger(widgetConfig.name_event_init, [
+                                            $this.trigger($this._widgetConfig.name_event_init, [
                                                     response, text, xhr
                                                 ]
                                             );
@@ -481,7 +481,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                                     },
                             "fail": function(jqXHR, status, statusText){
                                             $this.element.trigger(
-                                                widgetConfig.name_event_loadingFailed, [
+                                                $this._widgetConfig.name_event_loadingFailed, [
                                                     jqXHR, status, statusText
                                                 ]
                                             );
@@ -494,7 +494,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }else if (this.element.contents().size()) {
                         //this.apply(this.element);
                     }
-                    $this.trigger(widgetConfig.name_event_init);
+                    $this.trigger(this._widgetConfig.name_event_init);
                 },
 
                 get_initFailed_handler: function($this){
@@ -520,53 +520,53 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }
                     if (this.options.shape === null) {
                         if (this.element.attr('data-view-name')) {
-                            this.options.shape = widgetConfig.name_shape_content;
+                            this.options.shape = this._widgetConfig.name_shape_content;
                         }else
                         if (this.element.filter('body').size()) {
-                            this.options.shape = widgetConfig.name_shape_page;
+                            this.options.shape = this._widgetConfig.name_shape_page;
                         }else
-                        if (this.element.parent('tbody' + widgetConfig.selector_shape_container).size()) {
-                            this.options.shape = widgetConfig.name_shape_row;
+                        if (this.element.parent('tbody' + this._widgetConfig.selector_shape_container).size()) {
+                            this.options.shape = this._widgetConfig.name_shape_row;
                         }else
-                        if (this.element.parents('.' + widgetConfig.name_shape_widget).size()) {
-                            this.options.shape = widgetConfig.name_shape_content;
+                        if (this.element.parents('.' + this._widgetConfig.name_shape_widget).size()) {
+                            this.options.shape = this._widgetConfig.name_shape_content;
                         }else
-                        if (this.element.parents(widgetConfig.selector_shape_container).size()) {
-                            this.options.shape = widgetConfig.name_shape_widget;
+                        if (this.element.parents(this._widgetConfig.selector_shape_container).size()) {
+                            this.options.shape = this._widgetConfig.name_shape_widget;
                         }else{
-                            this.options.shape = widgetConfig.name_shape_content;
+                            this.options.shape = this._widgetConfig.name_shape_content;
                         }
                     }
                     if (this.options.shape === null) {
-                        this.options.shape = widgetConfig.name_shape_shapeless;
+                        this.options.shape = this._widgetConfig.name_shape_shapeless;
                     }else{
-                        if (this.options.shape == widgetConfig.name_shape_widget && this.element.parents('.'+config.frontend_generateClassName('interaction-dragable-area')).size()) {
+                        if (this.options.shape == this._widgetConfig.name_shape_widget && this.element.parents('.'+config.frontend_generateClassName('interaction-dragable-area')).size()) {
                             this.use_mixin('draggable');
                             //  attach to container
                         }
-                        if ([widgetConfig.name_shape_widget, widgetConfig.name_shape_container, widgetConfig.name_shape_page].indexOf(this.options.shape) != -1) {
+                        if ([this._widgetConfig.name_shape_widget, this._widgetConfig.name_shape_container, this._widgetConfig.name_shape_page].indexOf(this.options.shape) != -1) {
                             this.use_mixin('loading');
                         }
                     }
                     this.element.addClass(this.options.shape)
                     if (this.options.size === null) {
                         if (this.element.attr('data-view-name')) {
-                            this.options.size = widgetConfig.name_size_full
+                            this.options.size = this._widgetConfig.name_size_full
                         }else
                         if (this.element.filter('body').size()) {
-                            this.options.size = widgetConfig.name_size_full;
+                            this.options.size = this._widgetConfig.name_size_full;
                         }else
-                        if (this.element.filter('tr.' + widgetConfig.name_shape_content).size()) {
-                            this.options.size = widgetConfig.name_size_full;
+                        if (this.element.filter('tr.' + this._widgetConfig.name_shape_content).size()) {
+                            this.options.size = this._widgetConfig.name_size_full;
                         }else
-                        if (this.element.parents(widgetConfig.selector_shape_container).size()) {
-                            this.options.size = widgetConfig.name_size_small;
+                        if (this.element.parents(this._widgetConfig.selector_shape_container).size()) {
+                            this.options.size = this._widgetConfig.name_size_small;
                         }else{
-                            this.options.size = widgetConfig.name_size_full;
+                            this.options.size = this._widgetConfig.name_size_full;
                         }
                     }
                     if (this.options.size === null) {
-                        this.options.size = widgetConfig.name_size_sizeless;
+                        this.options.size = this._widgetConfig.name_size_sizeless;
                     }
                     this.element.addClass(this.options.size)
                 },
@@ -579,9 +579,9 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         footer_tag = header_tag = body_tag = this.element.filter('tr').size() ? 'td' : 'div',
                         _body;
                     var missingStructure = '',
-                    bodyClass = widgetConfig.name_classes_body,
-                    headerClass = widgetConfig.name_classes_header,
-                    footerClass = widgetConfig.name_classes_footer;
+                    bodyClass = this._widgetConfig.name_classes_body,
+                    headerClass = this._widgetConfig.name_classes_header,
+                    footerClass = this._widgetConfig.name_classes_footer;
                     if (content) {
                         this.element.html(content)
                     }
@@ -594,8 +594,8 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     if (this.element.children('.' + bodyClass).size() == 0) {
                         _body = '<'+body_tag+' class="' + bodyClass + '"></'+body_tag+'>';
                         content = this.element.children(
-                                                  ':not('+ widgetConfig.selector_elements_header +
-                                                  '):not('+ widgetConfig.selector_elements_footer +')'
+                                                  ':not('+ this._widgetConfig.selector_elements_header +
+                                                  '):not('+ this._widgetConfig.selector_elements_footer +')'
                                                   );
                         if (content.size() != 0) {
                             content.wrapAll(_body);
@@ -627,12 +627,12 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
 
                 initHeader: function(){
                     if (this.$header.find(':header').length == 0) {
-                        this.$header.html('<h3  class="'+widgetConfig.name_classes_title+'">'+this.__proto__.widgetFullName+'</h3>');
+                        this.$header.html('<h3  class="'+this._widgetConfig.name_classes_title+'">'+this.__proto__.widgetFullName+'</h3>');
                     }
                     this.$headline = this.$header.children(':header');
                     
                     if (this.options.closable) {
-                        var $closeBtn = $('<div class="' + widgetConfig.name_classes_close + ' "></div>');
+                        var $closeBtn = $('<div class="' + this._widgetConfig.name_classes_close + ' "></div>');
                         this.$header.prepend($closeBtn);
                         var $this = this;
                         $closeBtn.click(function(){
@@ -652,12 +652,12 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         $.each($data, function(index, element){
                             //TODO: fix ugly workaround
                             hasBody = hasBody || ($(element).attr('class').search('{{ frontendPrefix }}header') != -1);
-                                                                               //(widgetConfig.name_classes_body);
+                                                                               //(this._widgetConfig.name_classes_body);
                             hasHeader = hasHeader || ($(element).attr('class').search('{{ frontendPrefix }}body') != -1);
                         })
                     }else{
-                        hasBody = $data.hasClass(widgetConfig.name_classes_body) || $data.children('.' + widgetConfig.name_classes_body).size() == 1;
-                        hasHeader = $data.hasClass(widgetConfig.name_classes_header) || $data.children('.' + widgetConfig.name_classes_header).size() == 1;
+                        hasBody = $data.hasClass(this._widgetConfig.name_classes_body) || $data.children('.' + this._widgetConfig.name_classes_body).size() == 1;
+                        hasHeader = $data.hasClass(this._widgetConfig.name_classes_header) || $data.children('.' + this._widgetConfig.name_classes_header).size() == 1;
                     }
                     
                     if (hasBody || hasHeader || (!this.$body)) {

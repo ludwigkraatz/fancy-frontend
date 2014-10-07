@@ -1,7 +1,6 @@
 define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], function($, config){
     $(function() {
-        
-        widgetConfig = $[config.apps['fancy-frontend'].defaults_namespace]._widgetConfig;
+
         
        $.widget( config.apps['fancy-frontend'].namespace + '.list', $[config.apps['fancy-frontend'].defaults_namespace].core ,{
                 options: {
@@ -134,7 +133,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                 $this.buildHeader();
                                 $this.buildContainer();
                                 $this.buildFooter();
-                                var $body = $this.$body = $this.element.find(widgetConfig.selector_shape_container);
+                                var $body = $this.$body = $this.element.find($this._widgetConfig.selector_shape_container);
                                 if (content['Accept-Ranges'] !== undefined) {
                                     // config as discovered
                                     if (content) {
@@ -145,7 +144,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         var viewMixinEventPrefix = $this.mixins.view.event_prefix;
                                         if (content['actions']['POST'] !== undefined) {
                                             var createLink = $('<a href="#" class="'+config.frontend_generateClassName('action-add')+'"></a>');
-                                            $this.$header.find(widgetConfig.selector_elements_header).append(createLink);
+                                            $this.$header.find($this._widgetConfig.selector_elements_header).append(createLink);
                                             createLink.click(function(event){
                                                 event.preventDefault();
                                                 var view;
@@ -204,7 +203,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 },
                 
                 getHeaderFields: function(){
-                    return this.$header.children(widgetConfig.selector_elements_body)
+                    return this.$header.children(this._widgetConfig.selector_elements_body)
                 },
                 
                 addHeader: function(header, classes){
@@ -212,36 +211,36 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     $header = $('<'+tag+' class="'+(classes ? classes : '')+'"></'+tag+'>');
                     $header.attr(config.frontend_generateAttributeName('name'), header);
                     $header.html(header);
-                    //$header.addClass(widgetConfig.name_shape_element);
+                    //$header.addClass(this._widgetConfig.name_shape_element);
                     this.$header.append($header);
                 },
                 
                 buildContainer: function(){
                     var tag = this.asTable ? 'tbody' : 'div';
-                    this.$container = this.$list.children(widgetConfig.selector_shape_container);
+                    this.$container = this.$list.children(this._widgetConfig.selector_shape_container);
                     if (this.$container.size() <= 0) {
-                        this.$container = $('<'+tag+' class="'+ widgetConfig.name_classes_body +' '+ widgetConfig.name_shape_container +'"></'+tag+'>');
+                        this.$container = $('<'+tag+' class="'+ this._widgetConfig.name_classes_body +' '+ this._widgetConfig.name_shape_container +'"></'+tag+'>');
                         this.$container.insertAfter(this.$header);
                     }
                 },
                 
                 buildHeader: function(){
                     var tag = this.asTable ? 'thead' : 'div';
-                    this.$header = this.$list.children(widgetConfig.selector_elements_header);
+                    this.$header = this.$list.children(this._widgetConfig.selector_elements_header);
                     if (this.$header.size() == 0) {
-                        this.$list.prepend('<'+tag+' class="'+ widgetConfig.name_classes_header +'"></'+tag+'>');
-                        this.$header = this.$list.children(widgetConfig.selector_elements_header);
+                        this.$list.prepend('<'+tag+' class="'+ this._widgetConfig.name_classes_header +'"></'+tag+'>');
+                        this.$header = this.$list.children(this._widgetConfig.selector_elements_header);
                     }
                     
-                    this.addHeader('', widgetConfig.name_classes_header);
+                    this.addHeader('', this._widgetConfig.name_classes_header);
                     if (this.asTable) {
                         for (var header in this.options.headerFields){
-                            this.addHeader(this.options.headerFields[header], widgetConfig.name_classes_body);
+                            this.addHeader(this.options.headerFields[header], this._widgetConfig.name_classes_body);
                         }
                     }
-                    this.addHeader('', widgetConfig.name_classes_footer);
+                    this.addHeader('', this._widgetConfig.name_classes_footer);
                     
-                    var sortable_headers = this.$header.find(widgetConfig.selector_elements_sortable)
+                    var sortable_headers = this.$header.find(this._widgetConfig.selector_elements_sortable)
                     
                     if (sortable_headers.size() > 0) {
     
@@ -304,10 +303,10 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 buildFooter: function(){
                     var tag = this.asTable ? 'tfoot' : 'div';
-                    this.$footer = this.$list.children('.'+ widgetConfig.name_classes_footer);
+                    this.$footer = this.$list.children('.'+ this._widgetConfig.name_classes_footer);
                     if (this.$footer.size() == 0) {
-                        this.$list.append('<'+tag+' class="'+ widgetConfig.name_classes_footer +'"></'+tag+'>');
-                        this.$footer = this.$list.children('.'+ widgetConfig.name_classes_footer);
+                        this.$list.append('<'+tag+' class="'+ this._widgetConfig.name_classes_footer +'"></'+tag+'>');
+                        this.$footer = this.$list.children('.'+ this._widgetConfig.name_classes_footer);
                     }
                     if (this.options.pagination_asInfinite) {
                         this.$footer.append('<div class="loading"></div>');
