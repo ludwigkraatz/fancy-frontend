@@ -156,62 +156,51 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         }
         mixins.ApiMixin = ApiMixin;
 
+        var _AttrMixin = {
+            init: function(mixinConfig, name, initialValue, asPrimary){
+                var $this = this;
+                this.options.scope._prepareAttr(name, initialValue, asPrimary)
+                
+                var accessables = [name, name +'List'];
+                for (var index in accessables) {
+                    var _name = accessables[index];
+                    this.options[_name] = this.options.scope['_' + _name];
+                    this.log('option', _name, this.options.scope['_' + _name]);
+                    this.options.scope['_' + _name].bind('replaced', _AttrMixin.getReplacedHandler.call(this, _name));
+                }
+                this.options.scope._initAttr(name);
+            },
+            
+            getReplacedHandler: function(name){
+                var $this = this;
+                return function(event, obj){
+                    $this.log('updating option "'+name+'" with', obj)
+                    var newObj = obj;//obj.isBlank() ? null : obj;
+                    if (newObj !== $this.options[name]) {
+                        $this.options[name] = newObj;
+                        $this.trigger('option-changed.' + name, [newObj])
+                    }
+                }
+            }
+        };
+
         var ResourceMixin = {
-            init: function(mixinConfig){
-                var $this = this;/*
-                function initResource() {
-                    if ($this.options.scope._resource) {
-                        $this.options.resource = $this.options.scope._resource;
-                        if ($this.options.scope.__widgetReference) {
-                            $this.options.relationship = $this.options.scope.__widgetData;
-                        }
-                    }
-                    $this.trigger('resource-updated', [$this.options.resource])
-                }
-                function initResourceList() {
-                    if ($this.options.scope._resourceList) {
-                        $this.options.resourceList = $this.options.scope._resourceList;
-                        if ($this.options.scope.__widgetReference) {
-                            $this.options.relationship = $this.options.scope.__widgetData;
-                        }
-                    }
-                    if ($this.options.scope.__defaultWidgetView == 'detail') {
-                        $this.options.scope.log.debug('display list as the primary element')
-                        $this.options.scope.__target = 'uuid';
-                        $this.options.scope.__widgetResource = $this.options.scope.resourceList[0];
-                        $this.options.scope.initResource();
-                    }else{
-                        $this.options.scope.log.debug('update list view')
-                        $this.trigger('resourcelist-updated', [$this.options.resourceList])
-                    }
-                }
-                $this.options.scope.log.debug('register scope watcher')
-                this.options.scope.$watch('_resource', function(){
-                    if ($this.options.scope._resource !== $this.options.resource){
-                        $this.options.scope.log.debug('scope._resource changed', $this.options.scope.resource)
-                        initResource();
-                    }
-                });  
-                this.options.scope.$watch('_resourceList', function(){
-                    if ($this.options.scope._resourceList !== $this.options.resourceList){
-                        $this.options.scope.log.debug('scope._resourceList changed', $this.options.scope.resourceList)
-                        initResourceList();
-                    }else $this.options.scope.log.debug('watcher skipped updated list', $this.options.scope._resourceList, $this.options.resourceList)
-                });     
-                if ($this.options.scope.__widgetResource === null){
-                    $this.log('setting default object, not instance')
-                    $this.options.scope.__widgetResource = $this.object;
-                    //$this.options.scope.updateResource($this.options.scope.object({target:'uuid', data:$this.object}));
-                }
-                $this.options.scope.log.debug('init resource')            
-                this.options.scope.initResource();*/
-                
+            init: function(mixinConfig, initialValue, asPrimary){
+                var $this = this;
+                console.log(initialValue)
                 this.options.scope.prepareResource()
-                if ($this.options.scope.__resourceId === null){
-                    $this.log('setting default object, not instance')
-                    $this.options.scope.__resourceId = $this.object;
+                
+                _AttrMixin.init.call(this, mixinConfig, 'resource', initialValue, asPrimary)
+                
+                if ($this.options.scope.__widgetReference) {
+                    $this.options.relationship = $this.options.scope.__resourceReference;
+                }
+                        
+                if ($this.options.allowedRelationships === undefined) {
+                    $this.options.allowedRelationships = ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of]
                 }
                 
+                return
                 this.options.resource = this.options.scope._resource;
                 this.options.resourceList = this.options.scope._resourceList;
                 
@@ -229,7 +218,6 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         $this.trigger('resourcelist-updated', [$this.options.resourceList])
                     }
                 });
-
                 if ($this.options.scope.__widgetReference) {
                     $this.options.relationship = $this.options.scope.__resourceReference;
                 }
@@ -237,27 +225,22 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                 if ($this.options.allowedRelationships === undefined) {
                     $this.options.allowedRelationships = ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of]
                 }
-                this.options.scope.initResource();
+
+                this.options.scope._initAttr('resource');
                 
                     //this.options.instance = this.api.object.get($this.options.uuid);
                     // TODO: make sure this.options.resource is not just uuid
                 
-                /*
-                $this.options.resource.all({
-                    //target: $this.object,
-                    data: {},
-                    callback: function(result){   
-                            console.log('a', result.getContent())
-                        if (result.wasSuccessfull) {
-                            this.options.source = result.getContent();
-                        };
-                    }
-                });*/
-                
-            }
+            },
             
         };
         mixins.ResourceMixin = ResourceMixin;
+        var DevelopmentResourceMixin = {
+            init: function(mixinConfig){
+                ResourceMixin.init.call(this, mixinConfig, this.object);
+            }
+        };
+        mixins.DevelopmentResourceMixin = DevelopmentResourceMixin;
         var TOSMixin = {
             init: function(mixinConfig){
                 

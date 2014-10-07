@@ -19,11 +19,13 @@ define(['fancyPlugin!jquery'], function($){
                 }else if (!!_data) { // string
                     _relationship = _data;
                     $body.attr(create_as + '-reference', _relationship);
-                    if (this.options.scope._resource && this.options.scope._relationships[_relationship] === undefined) {
-                        this.options.scope._relationships[_relationship] = this.options.scope._resource.get('relationship', _relationship);
+                    if (this.options.resource &&
+                        !this.options.resource.isBlank() &&
+                        this.options.scope._relationships[_relationship] === undefined) {
+                            this.options.scope._relationships[_relationship] = this.options.resource.get('relationship', _relationship);
                     }else if (!this.options.scope._resource){
                         var e = Error('missing resource');
-                        this.log_error('missing resource', e)
+                        this.log('(error)', 'missing resource', e)
                         throw e
                     }
                     resourceList = this.options.scope._relationships[_relationship];
@@ -35,7 +37,7 @@ define(['fancyPlugin!jquery'], function($){
                     resourceList = $this.options.resourceList;
                 }else{
                     var e = Error('missing list source');
-                    this.log_error('missing list source', e, _data)
+                    this.log('(error)', 'missing list source', e, _data)
                     throw e
                 }
 
@@ -101,6 +103,11 @@ define(['fancyPlugin!jquery'], function($){
                     this.log('show create view, cause no resource found')
                     //$this.trigger(viewMixinEventPrefix + '-show.dynamic-widget.dynamic-dynamicet-widget', ['create']);
                 }
+                $this.options.resource.bind('replaced', function(event, resource){
+                    if ($this.options.resource !== resource) {
+                        DetailView.init(mixinConfig);// todo: unbind?
+                    }
+                })
                 
             }
         },

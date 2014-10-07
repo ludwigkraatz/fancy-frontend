@@ -11,7 +11,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     pagination_asInfinite: false,
                     headerFields: ['uuid', 'data'],
                     resource: null,
-                    allowedRelationships: ['-' + widgetConfig.relationships.child_of, '-' + widgetConfig.relationships.instance_of],
+                    allowedRelationships: null,
                     resourceList: null,
                     source: null,
                     entryWidget: null,
@@ -28,9 +28,12 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 _create: function() {
                     var $this = this;
                     this.asTable = !this.options.entryTemplate;
+                    if (!this.options.source)
+                            this.options.source = [];
                     //this.use_mixin('view');
                     //this.use_mixin('api');
-                    this.options.shape = widgetConfig.name_shape_container;
+                    this.options.allowedRelationships = this.options.allowedRelationships || ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of];
+                    this.options.shape = this._widgetConfig.name_shape_container;
                         this._superApply( arguments );
                     /*if (! this.element.hasClass('dynamic-list')) {
                         throw new Error('the target for "fancy_frontend.dynamic_list" widget needs to have a "dynamic-list" class');
@@ -50,10 +53,11 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     var tag = this.asTable ? 'table' : 'div';
                     this.$list = $('<'+tag+'></'+tag+'>');
                     this.element.html(this.$list);
+                    this.$container = $this.$list.find(this._widgetConfig.selector_shape_container);
                     this.$list.off('.dynamic-list', this.get_reload_handler(this));
-                    this.$list.addClass(widgetConfig.name_classes_list);
-                    this.$list.addClass(widgetConfig.name_shape_container);
-                    this.$list.addClass(widgetConfig.name_size_full);
+                    this.$list.addClass(this._widgetConfig.name_classes_list);
+                    this.$list.addClass(this._widgetConfig.name_shape_container);
+                    this.$list.addClass(this._widgetConfig.name_size_full);
                     this.$list.addClass(config.frontend_generateClassName('instance'));
                     
                     this.$list.on('dynamic-reload-list.dynamic-list.dynamic-widget', this.get_reload_handler(this));
@@ -62,19 +66,21 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     this.$list.on('dynamic-unzoom-list-entry.dynamic-list.dynamic-widget', this.get_unzoomEntry_handler(this));
                     //todo: this.element.on('dynamic-notification.dynamic-widget.dynamic-list', fancy_frontend.get_notification_handler(this));
                     
+                    // not used
                     this.on('updated', function(event, _data){
                         if (!!_data && _data.constructor == Array) {
                             $this.options.source = _data;
                             $this.options.resourceList = null;
                         }else if (!!_data) {
                             $this.options.resourceList = _data;
-                            this.options.source = null;
+                            this.options.source.length = 0;
                         }else{
                             $this.options.resourceList = null;
-                            $this.options.source = null;
+                            this.options.source.length = 0;
                         }
                         $this.updateConfig();                        
                     });
+                    // end not used
                     
                     if (this.options.resourceList && this.options.resourceList._replaced_with) {
                         // this is ugly, but because of the sequential processing, when an replacement event is fired while
@@ -83,12 +89,12 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }
 
                     if (this.options.resourceList != null && this.options.source != null){
-                        this.options.source = null;
+                        this.options.source.length = 0; // this is done twice here, isn't it?
                     }
                     if (!!$this.options.source) {
                         this.options.scope._source = $this.options.source;
                         this.options.scope.$watch('_source', function(){
-                            $this.updateConfig();
+                            if (!$this.options.resourceList)$this.updateConfig();
                         })
                     }
                     if ($this.options.resourceList) {this.log('register list view event handler', $this.options.resourceList)
@@ -174,7 +180,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                     resourceList.load(function(result){
                                             var content = result.getContent();//result.getObject().all();//result.getContent();
                                             $this.log('list content', content)
-                                            $this.options.source = [];
+                                            $this.options.source.length = 0;
                                             $.each(content, function(index, element){
                                                 $this.options.source.push(element)
                                             })
@@ -189,10 +195,10 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                             }
                         })
                     }else if (this.options.source){
-                        $this.element.html('TODO');
+                        $this.$container.html('TODO');
                         $this.options.scope.log.debug('TODO: implement plain source list');
                     }else{
-                        $this.element.html('');
+                        $this.$container.html('');
                         $this.options.scope.log.debug('emptying list');
                     }
                 },
@@ -386,7 +392,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 goToPage: function(page, letter){
                     var page_nr = parseInt(page);
-                    
+                    this.log('page', page)
                     this.$list.data('current_page', page);
                     this.$list.data('current_letter', letter)
                         
@@ -540,7 +546,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 get_showList_handler: function($this, page, letter){
                     return function(data){
                         
-                        var $container = $this.$list.find(widgetConfig.selector_shape_container);
+                        var $container = $this.$container;
                         $container.find('.dynamic-list-entry').each(function(index, elem){
                             var $elem = $(elem);
                             var content = $elem.html();//.get(0);
