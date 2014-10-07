@@ -343,10 +343,11 @@ define(function(base){
         fixture = parts[1];
         app = parts[0];
       }
+      widget = fixture.split('.')[0];
 
       var path = structure.fixture.path
         .replace(/{fixture}/g, fixture)
-        .replace(/{widget}/g, fixture)
+        .replace(/{widget}/g, widget)
         .replace(/{app}/g, app);
 
       return {
