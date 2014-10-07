@@ -307,6 +307,7 @@ define(function(base){
         app = parts[0];
       }
       var template = this.value(name);
+      widget = template.split('.')[0];
 
       var theme = this.getCurrentTheme(config);
 
@@ -319,6 +320,7 @@ define(function(base){
         .replace(/{template}/g, template)
         .replace(/{extension}/g, extension)
         .replace(/{theme}/g, theme || '')
+        .replace(/{widget}/g, widget)
         .replace(/{app}/g, app || this.getCurrentApp(config));
 
       return {
