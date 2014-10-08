@@ -159,90 +159,73 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         mixins.ApiMixin = ApiMixin;
 
         var _AttrMixin = {
-            init: function(mixinConfig, name, initialValue, asPrimary){
+            init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships){
                 var $this = this;
-                this.options.scope._prepareAttr(name, initialValue, asPrimary)
+                this.options.scope._prepareAttr(name, initialValue, attrReference, asPrimary)
                 
                 var accessables = [name, name +'List'];
                 for (var index in accessables) {
                     var _name = accessables[index];
                     this.options[_name] = this.options.scope['_' + _name];
                     this.log('option', _name, this.options.scope['_' + _name]);
-                    this.options.scope['_' + _name].bind('replaced', _AttrMixin.getReplacedHandler.call(this, _name));
+                    this.options.scope['_' + _name].bind('replaced', _AttrMixin.replacedHandler.bind(this, _name));
+                }
+                if ($this.options.scope['__'+name+'Reference']) {
+                    $this.options[name+'Relationship'] = $this.options.scope['__'+name+'Reference'];
+                }
+                if (!$this.options.hasOwnProperty(name + 'RelationshipsAllowed') && defaultRelationships) {
+                    $this.options[name + 'RelationshipsAllowed'] = defaultRelationships;
                 }
                 this.options.scope._initAttr(name);
             },
             
-            getReplacedHandler: function(name){
+            replacedHandler: function(name, event, obj){
                 var $this = this;
-                return function(event, obj){
-                    $this.log('updating option "'+name+'" with', obj)
-                    var newObj = obj;//obj.isBlank() ? null : obj;
-                    if (newObj !== $this.options[name]) {
-                        $this.options[name] = newObj;
-                        $this.trigger('option-changed.' + name, [newObj])
-                    }
+                $this.log('updating option "'+name+'" with', obj)
+                var newObj = obj;//obj.isBlank() ? null : obj;
+                if (newObj !== $this.options[name]) {
+                    $this.options[name] = newObj;
+                    $this.trigger('option-changed.' + name, [newObj])
                 }
             }
         };
+        mixins._AttrMixin = _AttrMixin;
 
         var ResourceMixin = {
-            init: function(mixinConfig, initialValue, asPrimary){
+            init: function(mixinConfig, initialValue, asPrimary, defaultRelationships){
                 var $this = this;
-                console.log(initialValue)
-                this.options.scope.prepareResource()
                 
-                _AttrMixin.init.call(this, mixinConfig, 'resource', initialValue, asPrimary)
+                _AttrMixin.init.call(
+                                     this,
+                                     mixinConfig,
+                                     'resource',
+                                     initialValue,
+                                     this.options.scope.__widgetReference,
+                                     asPrimary,
+                                     defaultRelationships
+                                     )
                 
-                if ($this.options.scope.__widgetReference) {
-                    $this.options.relationship = $this.options.scope.__resourceReference;
-                }
                         
-                if ($this.options.allowedRelationships === undefined) {
-                    $this.options.allowedRelationships = ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of]
-                }
                 
                 return
-                this.options.resource = this.options.scope._resource;
-                this.options.resourceList = this.options.scope._resourceList;
-                
-                this.options.scope._resource.bind('replaced', function(event, resource){
-                    var newResource = resource.isBlank() ? null : resource;
-                    if (newResource !== $this.options.resource) {
-                        $this.options.resource = newResource;
-                        $this.trigger('resource-updated', [$this.options.resource])
-                    }
-                });
-                this.options.scope._resourceList.bind('replaced', function(event, resourceList){
-                    var newResourceList = resourceList.isBlank() ? null : resourceList;
-                    if (newResourceList !== $this.options.resourceList) {
-                        $this.options.resourceList = newResourceList;
-                        $this.trigger('resourcelist-updated', [$this.options.resourceList])
-                    }
-                });
-                if ($this.options.scope.__widgetReference) {
-                    $this.options.relationship = $this.options.scope.__resourceReference;
-                }
-                        
-                if ($this.options.allowedRelationships === undefined) {
-                    $this.options.allowedRelationships = ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of]
-                }
-
-                this.options.scope._initAttr('resource');
-                
-                    //this.options.instance = this.api.object.get($this.options.uuid);
-                    // TODO: make sure this.options.resource is not just uuid
                 
             },
             
         };
         mixins.ResourceMixin = ResourceMixin;
         var DevelopmentResourceMixin = {
-            init: function(mixinConfig){
-                ResourceMixin.init.call(this, mixinConfig, this.object);
+            init: function(mixinConfig, initialValue, asPrimary, defaultRelationships){
+                ResourceMixin.init.call(
+                                        this,
+                                        mixinConfig,
+                                        initialValue || this.object,
+                                        asPrimary,
+                                        defaultRelationships || ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of]
+                                    );
             }
         };
         mixins.DevelopmentResourceMixin = DevelopmentResourceMixin;
+        
         var TOSMixin = {
             init: function(mixinConfig){
                 
