@@ -18,7 +18,9 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         if (this.setDefaultView) {
                             this.setDefaultView()
                         }else{
-                            ViewMixin.setDefaultView.call(this);
+                            if (ViewMixin.setDefaultView.call(this) === false){
+                                this.setDefaultView()
+                            }
                         }
                     }
                 },
