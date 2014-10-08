@@ -21,14 +21,14 @@ define(['fancyPlugin!jquery'], function($){
                     $body.attr(create_as + '-reference', _relationship);
                     if (this.options.resource &&
                         !this.options.resource.isBlank() &&
-                        this.options.scope._relationships[_relationship] === undefined) {
-                            this.options.scope._relationships[_relationship] = this.options.resource.get('relationship', _relationship);
+                        this.options.scope.__resourceRelationships[_relationship] === undefined) {
+                            this.options.scope.__resourceRelationships[_relationship] = this.options.resource.get('relationship', _relationship);
                     }else if (!this.options.scope._resource){
                         var e = Error('missing resource');
                         this.log('(error)', 'missing resource', e)
                         throw e
                     }
-                    resourceList = this.options.scope._relationships[_relationship];
+                    resourceList = this.options.scope.__resourceRelationships[_relationship];
                 }else if ($this.options.resourceList){/*
                     $this.options.scope.log.debug('setting up list view event proxy');
                     $this.element.on('resourcelist-updated', function(event, resourceList){
@@ -48,7 +48,8 @@ define(['fancyPlugin!jquery'], function($){
                                                             resourceList: resourceList,
                                                             source: source,
                                                             entryWidget: this.options.scope.__widgetNamespace + '.' + this.options.scope.__widgetName,
-                                                            entryTemplate: this.options.content ? this.options.content : null
+                                                            entryTemplate: this.options.content ? this.options.content : null,
+                                                            allowedRelationships: this.options.resourceRelationshipsAllowed,
                                                         });
                 
                 $this.apply($body);
