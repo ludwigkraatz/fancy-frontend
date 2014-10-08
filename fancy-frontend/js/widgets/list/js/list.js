@@ -175,6 +175,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         //TODO 
                                         $this.$body.html('error discovering');
                                     }
+                                
                                     // show list
                                     resourceList.load(function(result){
                                             var content = result.getContent();//result.getObject().all();//result.getContent();
