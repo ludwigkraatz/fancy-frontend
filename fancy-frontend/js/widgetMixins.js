@@ -240,7 +240,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             };
         var LoadingMixin = {
             
-                init: function(mixinConfig){                    
+                init: function(mixinConfig){      
                     this.$loading = null;
                     this.$loading_toggle = null;
                     //this.element.on('dynamic-loading-widget-failed.dynamic-widget.dynamic-dynamicet-widget', mixins.LoadingMixin.get_initFailed_handler(this));
@@ -300,7 +300,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                             if (counter == 0) {
                                 return;
                             }else if (counter == 1) {
-                                $this.element.removeClass(config.frontend_generateClassName('state-loading'))
+                                $this.element.removeClass(config.frontend_generateClassName('state-loading'));
                                 $this.$loading.removeClass('dynamic-active');
                                 $this.$loading_toggle.show()
                             };
