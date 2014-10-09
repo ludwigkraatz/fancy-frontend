@@ -42,7 +42,7 @@ $state: null;
  * |--> tr.*** = row
  * |-widget
  * |-element
- * |-action
+ * |-icon
  * |-popup
  */
 $size: null;
@@ -71,6 +71,7 @@ $zoom: null;
  * frontendPrefix-interactive-INTERACTIONable   => interaction can be done
  * frontendPrefix-interaction-INTERACTION       => is caused by interaction
  * frontendPrefix-action-ACTION                 => interaction can be triggerd
+ * frontendPrefix-action                        => interaction can be triggerd
  * frontendPrefix-interactables                 => a wrapper for interact(able) elements
  * frontendPrefix-actions                       => a wrapper for action(able) elements
  *
