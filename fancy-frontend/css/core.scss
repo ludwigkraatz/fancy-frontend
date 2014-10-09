@@ -226,7 +226,10 @@ table.#{$frontend-prefix}instance {
 }
 
 .#{$frontend-prefix}instance.#{$frontend-prefix}state-initializing {
-  @include iconMixin_loading;
+    &:after {
+        @include iconMixin_loading;
+        content: '';
+    }
 }
 
 .#{$frontend-prefix}action-close{
