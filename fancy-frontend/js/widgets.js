@@ -306,13 +306,12 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         $this.setupContent();
                     })
                     // TODO: if debug
-                    this.element.on('inspect', function(event, callback){
+                    this.on('inspect', function(event, callback){
                         if (callback){
-                            callback($this);
+                            callback('widget', $this);
                         }else{
-                            console.log($this)
-                        }//console.log($this.options.scope)
-                        return false
+                            console.log('widget', $this)
+                        }
                     })
                     
                     this.element.on('close', function(event){
