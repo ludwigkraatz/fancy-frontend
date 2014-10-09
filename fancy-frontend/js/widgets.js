@@ -296,8 +296,8 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         console.log(this.element);
                         throw Error('no widget name found');
                     }
-                    this.element.addClass(config.frontend_generateClassName('object-'+widgetName));
-                    this.element.addClass(config.frontend_generateClassName('instance'));
+                    //done in directive: this.element.addClass(config.frontend_generateClassName('object-'+widgetName));
+                    //this.element.addClass(config.frontend_generateClassName('instance'));
                     this.log('init widget', widgetName, this.options.source, this.options.resourceList)
                     
                     this.element.on('asset-loaded.template', function(event, name, response){
@@ -335,6 +335,10 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }
                     
                     this.setupContent()
+                    // show widget content, because could be with content
+                    if (this.element.hasClass(config.frontend_generateClassName('state-initializing'))){
+                        this.element.removeClass(config.frontend_generateClassName('state-initializing'));
+                    };              
                 },
                 
                 loadDependencies: function(dependencyConfig){
