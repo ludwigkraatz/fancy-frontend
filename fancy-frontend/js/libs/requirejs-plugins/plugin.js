@@ -266,26 +266,28 @@ define(function(base){
 
     load_css: function(config, name){
 
-      this.validate(config, 'template');
+      this.validate(config, 'css');
 
-      var structure = config.structure;
+        var structure = config.structure,
+            app;
       parts = name.split(':');
 
       if (parts.length == 1) {
-        var path = this.value(parts[0]);
+        var path = structure.css.path
+          .replace(/{app}/g, app || this.getCurrentApp(config))
+          .replace(/{path}/g, this.value(parts[0]));
       }else {
-        var template = this.value(parts[0]);
-        var file = this.value(parts[1]);
+        var app = parts[0];
+        var widget = parts[1];
+        var file = parts.length > 2 ? parts[2] : null;
         var theme = this.getCurrentTheme(config);
-        var path = "widgets/{widget}/{file}{theme}"
-          .replace(/{widget}/g, template)
-          .replace(/{file}/g, file)
+
+        var path = structure.css.widget_path
+          .replace(/{app}/g, app || this.getCurrentApp(config))
+          .replace(/{widget}/g, widget)
+          .replace(/{file}/g, file || widget)
           .replace(/{theme}/g, theme || '');
       }
-
-      var path = structure.css.path
-        .replace(/{app}/g, this.getCurrentApp(config))
-        .replace(/{path}/g, path);
 
       return {
         reqPath: this.path(path, config, 'css'),
