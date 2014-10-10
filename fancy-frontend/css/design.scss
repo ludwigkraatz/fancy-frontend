@@ -479,6 +479,17 @@ $zoom: null;
     margin: 0 auto;
 }
 
+@mixin proxyDesign {
+    
+    &.#{$frontend-prefix}state-empty{
+        display: none;
+    }
+    
+    &.#{$frontend-prefix}state-active-proxy{
+        display: initial;
+    }
+}
+
 @mixin widgetDesign {
     @include spacingMixin;
     @include shapeMixin;

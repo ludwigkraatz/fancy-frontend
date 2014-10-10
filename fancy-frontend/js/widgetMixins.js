@@ -6,23 +6,33 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         var ViewMixin = {
                 event_prefix: 'dynamic-view',
                 init: function(mixinConfig){
+                    var $this = this;
                     
-                    // setup view infrastructure
-                    this.setupMixinHandlers(ViewMixin.event_prefix, this.views);
-                    ViewMixin.setupView.apply(this);
+                    if (mixinConfig.data.views) {
+                        this.views = $.extend({}, this.views, mixinConfig.data.views);          // make sure changes are just for this instance
+                    }
+                    //this.addView = ViewMixin.addView.bind(this);
+                    
+                    mixinConfig.elements = mixinConfig.elements || ['body'];
+                    ViewMixin.setupLazyView.call($this, mixinConfig); 
+                    this.setupMixinHandlers(ViewMixin.event_prefix, this.views);                    
                     
                     // init active view
-                    if (this.options.defaultView) {
-                        this.trigger(ViewMixin.event_prefix + '-show', [this.options.defaultView]);
+                    if ($this.options.defaultView) {
+                        $this.trigger(ViewMixin.event_prefix + '-show', [$this.options.defaultView]);
                     }else{
-                        if (this.setDefaultView) {
-                            this.setDefaultView()
+                        if ($this.setDefaultView) {
+                            $this.setDefaultView()
                         }else{
-                            if (ViewMixin.setDefaultView.call(this) === false){
-                                this.setDefaultView()
+                            if (ViewMixin.setDefaultView.call($this) === false){
+                                $this.setDefaultView()
                             }
                         }
                     }
+                },
+                
+                addView: function(name, view){
+                    this.views[name] = view;
                 },
                 
 
@@ -34,7 +44,117 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     }
                 },
                 
+                setupViewWidget: function(mixinConfig, $view){
+                    var $this = this;
+                    
+                    this.element.off(ViewMixin.event_prefix + '-popup');
+                    this.element.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
+                        event.stopPropagation();
+                        $this.options.scope.log.debug('show popup:', mixinConfig._activeView_package);
+                        
+                        $view.trigger('popup', [
+                                               name, //$this.generateStateIdentifier.bind($this),
+                                               $this.initWidgetStructure.bind($this, mixinConfig.elements),
+                                               function(newElements){
+                                                    
+                                                }, function(){
+                                                    $this.trigger(ViewMixin.event_prefix + '-found', [name, data]);
+                                                    
+                                                    $this.popUp(function(){
+                                                        if (typeof data == 'function') {
+                                                            data.apply($this, arguments);
+                                                        }
+                                                        if (mixinConfig._activeView_package) {
+                                                            $this.trigger(ViewMixin.event_prefix + '-show', mixinConfig._activeView_package);
+                                                        }
+                                                    });
+                                                },
+                                                true
+                                            ]
+                        )
+                        
+                    });
+                    this.element.off(ViewMixin.event_prefix + '-show');
+                    this.element.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
+                        event.stopPropagation();
+                        mixinConfig._activeView_package = [name, data];
+                        $this.options.scope.log.debug('show view:', mixinConfig._activeView_package);
+                        
+                        $view.trigger('show', [
+                                               mixinConfig._activeView_package[0], //$this.generateStateIdentifier.bind($this),
+                                               $this.initWidgetStructure.bind($this, mixinConfig.elements),
+                                               function(newElements){
+                                                    
+                                                }, function(){
+                                                    $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
+                                                },
+                                                true
+                                            ]
+                        )
+                        
+                    });
+                },
                 
+                runViewWidget: function(mixinConfig, elements, showNewView, popup){
+                    var $this = this;
+                    ViewMixin.setupViewWidget.call($this, mixinConfig, $this.element);
+                    this.options.widgetCore.create_plugin(
+                                    this.element,
+                                    'fancy-frontend.view',
+                                    {
+                                        attached: true,
+                                        initView: {
+                                            name: mixinConfig._activeView_package ? mixinConfig._activeView_package[0] : null, //this.generateStateIdentifier.bind(this),
+                                            elements: elements,
+                                            setContent: function(newElements){
+                                                
+                                            },
+                                            reloadContent: showNewView,
+                                            cache: true,
+                                            popup: popup
+                                        },
+                                    }
+                    )
+                    // setup view infrastructure
+                    this.apply(this.element)
+                },
+                
+                setupLazyView: function (mixinConfig){
+                    var $this = this;
+                    
+                    this.element.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
+                        event.stopPropagation();
+                        
+                        elements = $this.initWidgetStructure.bind($this, mixinConfig.elements, false);//mixinConfig._activeView_package ? true : false);
+                        
+                        ViewMixin.runViewWidget.call($this, mixinConfig,
+                                                elements,
+                                                function(){ 
+                                                   $this.trigger(ViewMixin.event_prefix + '-popup', [name, data]);
+                                                   
+                                            },
+                                            true
+                                          );
+                    });
+                    
+                    this.element.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
+                        event.stopPropagation();
+                        $this.options.scope.log.debug('show view:', name, data);
+                        if (mixinConfig.hasOwnProperty('_activeView_package') && mixinConfig._activeView_package) {
+                            ViewMixin.runViewWidget.call($this, mixinConfig,
+                                                $this.initWidgetStructure.bind($this, mixinConfig.elements, false),
+                                                function(){ 
+                                                   $this.trigger(ViewMixin.event_prefix + '-show', [name, data]);
+                                                }
+                                              );
+                        }else{
+                            mixinConfig._activeView_package = [name, data];
+                            $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
+                        }
+                    });
+                },
+                
+                /*
                 setupView: function (){
                     var $content = $('<div data-initial-view=true data-active=true></div>');
                     if (this.options.activeView) {
@@ -93,7 +213,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         setViewBody(name, data);
                     });
                     //this.$body = this.$activeView.find('.body');
-                },
+                },*/
             };
         mixins.ViewMixin = ViewMixin;
         

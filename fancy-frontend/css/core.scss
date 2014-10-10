@@ -213,6 +213,10 @@ table.#{$frontend-prefix}instance {
     border-collapse: collapse;
 }
 
+.#{$frontend-prefix}proxy{
+    @include proxyDesign;
+}
+
 
 .#{$frontend-prefix}design-clearfix {
     @include clearfixMixin;

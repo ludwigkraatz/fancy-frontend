@@ -11,12 +11,10 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 },
                 
                 _destroy: function(){
-                    if (this.options.callback) {
+                    if (this.element.data("__initialized") && this.options.callback) {
                         this.options.callback.apply(this);
                     }
                     
-                    this.element.triggerHandler('dynamic-closed-popup');
-                    this.element.off('.dynamic-popup-window');
                     this._superApply( arguments );
                 },
                 
@@ -28,6 +26,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     if (this.options.widget_url == null && this.options.iframe_url == null) {
                         throw new Error('the "fancy_frontend.popup" needs a widget_url or iframe_url option');
                     }*/
+                    this.options.shape = this._widgetConfig.name_shape_popup;
                     
                     this._superApply( arguments );
                     

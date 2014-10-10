@@ -9,6 +9,7 @@ define(['fancyPlugin!jquery'], function($){
                 var _data = mixinConfig.data ? (mixinConfig.data.source || mixinConfig.data.relationship) : undefined,
                     $this = this,
                     $body = this.$body,
+                    reference = undefined,
                     resourceList,
                     source = null,
                     _relationship,
@@ -18,7 +19,7 @@ define(['fancyPlugin!jquery'], function($){
                     sources = _data;
                 }else if (!!_data) { // string
                     _relationship = _data;
-                    $body.attr(create_as + '-reference', _relationship);
+                    reference = _relationship;
                     if (this.options.resource &&
                         !this.options.resource.isBlank() &&
                         this.options.scope.__resourceRelationships[_relationship] === undefined) {
@@ -43,7 +44,7 @@ define(['fancyPlugin!jquery'], function($){
 
                 $this.options.widgetCore['create_' + create_as](
                                                        $body,
-                                                       'fancy-frontend.list' + (_relationship ? ':'+_relationship : ''),
+                                                       'fancy-frontend.list'+(_relationship ? '<'+_relationship+'>' : '')+'' + (_relationship ? ':'+_relationship : ''),
                                                        {
                                                             resourceList: resourceList,
                                                             source: source,

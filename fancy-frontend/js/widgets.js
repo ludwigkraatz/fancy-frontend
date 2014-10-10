@@ -87,6 +87,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
             widgetConfig.name_shape_page = config.frontend_generateClassName('shape-page');
             widgetConfig.name_shape_row = config.frontend_generateClassName('shape-row');
             widgetConfig.name_shape_widget = config.frontend_generateClassName('shape-widget');
+            widgetConfig.name_shape_popup = config.frontend_generateClassName('shape-popup');
             widgetConfig.name_shape_container = config.frontend_generateClassName('shape-container');
             widgetConfig.name_size_sizeless = config.frontend_generateClassName('size-sizeless');
             widgetConfig.name_shape_shapeless = config.frontend_generateClassName('shape-shapeless');
@@ -166,6 +167,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 _fixtures: null,
                 _used_mixins: null,
                 _widgetConfig: widgetConfig,
+                _instanceSelector: null,
 
                 log: function(){
                     if (this.options && this.options.scope && this.options.scope.log) {
@@ -194,20 +196,31 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 },
                 
                 trigger: function(events, selector, data, handler){
+                    if (this._instanceSelector) {
+                        //events += this._instanceSelector;
+                        //events = this.widgetName + ':' + events
+                        //console.log(events)
+                    }
                     this.element.triggerHandler.call(this.element, events, selector, data, handler);
                 },
                 on: function(events, selector, data, handler){
+                    if (this._instanceSelector) {
+                        //events += this._instanceSelector;
+                        //events = this.widgetName + ':' + events
+                        //console.log(events)
+                    }
                     this.element.on.call(this.element, events, selector, data, handler);
                 },
 
-                use_mixin: function(mixin){
+                use_mixin: function(mixin, config){
                     if (this._used_mixins === null) {
                         this._used_mixins = [];
                     }
                     if (this._used_mixins.indexOf(mixin) == -1) {
-                        this._used_mixins.push(mixin)
+                        var mixin_package = [mixin, config];
+                        this._used_mixins.push(mixin_package)
                         if (this.element.data('__initialized')) {
-                            this.trigger(this._widgetConfig.name_event_mixin + '-found', [mixin]);
+                            this.trigger(this._widgetConfig.name_event_mixin + '-found', mixin_package);
                             
                         }
                     }
@@ -269,7 +282,6 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }*/
                     var $this = this;
                     
-                    this.element.data('__initialized', true); // otherwise [fancy_frontend].scan() would initialize it again
                     this.element.attr('_uuid', this.uuid)
                     this.apply = function($target){
                         //if (!$target.data('__initialized')) {
@@ -279,8 +291,10 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         //}
                     }
                     
+                    if (this.options.scope) {
+                        this.options.scope.init(this);
+                    }
                     
-                    this.options.scope.init(this);
 
                     //this.element.off('.dynamic-dynamicet-widget');
                     // init mixin bindings
@@ -296,10 +310,18 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         console.log(this.element);
                         throw Error('no widget name found');
                     }
-                    //done in directive: this.element.addClass(config.frontend_generateClassName('object-'+widgetName));
-                    //this.element.addClass(config.frontend_generateClassName('instance'));
+                    var elementClass = config.frontend_generateClassName('object-'+widgetName);
+                    this._instanceSelector = '.' + elementClass;
+                    if (!this.element.hasClass(elementClass)){
+                        this.element.addClass(elementClass)
+                    };
+                    if (!this.element.hasClass(config.frontend_generateClassName('instance'))){
+                        this.element.addClass(config.frontend_generateClassName('instance'));
+                    };
                     this.log('init widget', widgetName, this.options.source, this.options.resourceList)
                     
+                    this.on('start-initializing', this.startInitializingHandler.bind(this));
+                    this.on('end-initializing', this.endInitializingHandler.bind(this));
                     this.element.on('asset-loaded.template', function(event, name, response){
                         event.stopPropagation();
                         $this.options.content = response;
@@ -324,20 +346,29 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     this.loadDependencies();
                     this.initWidgetStructure();
                     this.element.trigger(this._widgetConfig.name_event_preInit + '');
-                    
                     // init mixins
                     this.setupMixinHandlers(this._widgetConfig.name_event_mixin, this.mixins);
                     if (this._used_mixins) {
-                        $.each(this._used_mixins.reverse(), function(index, mixin){
-                            $this.trigger($this._widgetConfig.name_event_mixin + '-found', [mixin]);
+                        $.each(this._used_mixins.reverse(), function(index, mixin_package){
+                            $this.trigger($this._widgetConfig.name_event_mixin + '-found', mixin_package);
                         });
                     }
                     
                     this.setupContent()
                     // show widget content, because could be with content
+                    
+                    this.trigger('end-initializing');         
+                },
+                
+                startInitializingHandler: function(){
+                    this.element.addClass(config.frontend_generateClassName('state-initializing'));  
+                },
+                
+                endInitializingHandler: function(){
                     if (this.element.hasClass(config.frontend_generateClassName('state-initializing'))){
                         this.element.removeClass(config.frontend_generateClassName('state-initializing'));
-                    };              
+                    };     
+                    this.element.data('__initialized', true); // otherwise [fancy_frontend].scan() would initialize it again
                 },
                 
                 loadDependencies: function(dependencyConfig){
@@ -393,16 +424,15 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 },
                 
                 _destroy: function(){
-                    // destroy mixins
-                    $.each(this.options.mixins, function(index, element){
-                        $this.element.trigger('dynamic-mixin-removed', [element]);
-                    });
-                    
-                    this.element.off('.dynamic-dynamicet-widget');
-                    //this.element.html('')
-                    //this.element.remove();
-                    
                     if (this.element.data("__initialized")) {
+                        // destroy mixins
+                        $.each(this.options.mixins, function(index, element){
+                            $this.element.trigger('dynamic-mixin-removed', [element]);
+                        });
+                        
+                        this.element.off('.dynamic-dynamicet-widget');
+                        //this.element.html('')
+                        //this.element.remove();
                         this.element.removeData("__initialized");
                         this.element.remove();
                     }
@@ -574,58 +604,109 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     this.element.addClass(this.options.size)
                 },
                 
-                initWidgetStructure: function(content){
+                initWidgetStructure: function(elements, clear){
+                    clear = clear === undefined ? true : clear;
                     this.setShape();
                     var $this = this,
-                        header_tag,
-                        body_tag,
-                        footer_tag = header_tag = body_tag = this.element.filter('tr').size() ? 'td' : 'div',
+                        footer_tag = this.element.filter('table').size() ? 'tfoot' : this.element.filter('tr').size() ? 'td' : 'div',
+                        header_tag = this.element.filter('table').size() ? 'thead' : this.element.filter('tr').size() ? 'td' : 'div',
+                        body_tag = this.element.filter('table').size() ? 'tbody' : this.element.filter('tr').size() ? 'td' : 'div',
                         _body;
                     var missingStructure = '',
                     bodyClass = this._widgetConfig.name_classes_body,
                     headerClass = this._widgetConfig.name_classes_header,
                     footerClass = this._widgetConfig.name_classes_footer;
-                    if (content) {
-                        this.element.html(content)
+                    /*if (content) {
+                        this.element.append(content)
+                    }*/
+                    if (!elements){
+                        elements = ['header', 'body', 'footer']
+                    }
+                    ret = {};
+                    if (clear) {
+                        this.clear(elements);
                     }
                     
-                    if (this.element.children('.' + headerClass).size() == 0) {
-                        this.element.prepend('<'+header_tag+' class="' + headerClass + '"></'+header_tag+'>');
-                    };
-                    this.$header = this.element.children('.' + headerClass);
-                    
-                    if (this.element.children('.' + bodyClass).size() == 0) {
-                        _body = '<'+body_tag+' class="' + bodyClass + '"></'+body_tag+'>';
-                        content = this.element.children(
-                                                  ':not('+ this._widgetConfig.selector_elements_header +
-                                                  '):not('+ this._widgetConfig.selector_elements_footer +')'
-                                                  );
-                        if (content.size() != 0) {
-                            content.wrapAll(_body);
-                        }else{
-                            this.$header.after(_body);
-                        }
-                    };
-
-                    if (this.element.filter('.' + this._widgetConfig.name_shape_row).size()){
-                        var first = true;
-                        this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).each(function() {
-                            if (first) {
-                                first = false;
-                                $this.element.find('.' + bodyClass)
+                    for (var _element in elements) {
+                        var elem = elements[_element];
+                            
+                        
+                        if (elem == 'header') {
+                            if (this.$header) {
+                                this.$header.addClass(headerClass);
                             }else{
-                                $this.$header.after(_body);
+                                this.$header = $('<'+header_tag+' class="' + headerClass + '"></'+header_tag+'>');
+                                this.element.prepend(this.$header);
                             }
-                        });
-                    };
-                    this.$body = this.element.children('.' + bodyClass);
-
-                    if (this.element.children('.' + footerClass).size() == 0) {
-                        this.element.append('<'+footer_tag+' class="' + footerClass + '"></'+footer_tag+'>');
-                    };
-                    this.$footer = this.element.children('.' + footerClass);
+                            this.initHeader();
+                        }else if (elem == 'body') {
+                            var _body = '<'+body_tag+' class="' + bodyClass + '"></'+body_tag+'>';
+                            //if (this.element.children('.' + bodyClass).size() == 0) {
+                            if (this.$body) {
+                                this.$body.addClass(bodyClass);
+                            }else{
+                                this.$body = $(_body);
+                                content = this.element.children(
+                                                          ':not('+ this._widgetConfig.selector_elements_header +
+                                                          '):not('+ this._widgetConfig.selector_elements_footer +')'
+                                                          );
+                                if (content.size() != 0) {
+                                    content.wrapAll(this.$body);
+                                }else{
+                                    this.$header.after(this.$body);
+                                }
+                            }
+                            //};
+        
+                            if (this.element.filter('.' + this._widgetConfig.name_shape_row).size()){
+                                var first = true;
+                                
+                                this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).each(function() {
+                                    if (first) {
+                                        first = false;
+                                    }else{
+                                        var $body = $(_body);
+                                        $this.$body.after($body);
+                                        $this.$body = $this.$body.add($body);
+                                    }
+                                });
+                            };
+                        }else if (elem == 'footer') {
+                            //if (this.element.children('.' + footerClass).size() == 0) {
+                                if (this.$footer) {
+                                    this.$footer.addClass(footerClass);
+                                }else{
+                                    this.$footer = $('<'+footer_tag+' class="' + footerClass + '"></'+footer_tag+'>');
+                                    this.element.append(this.$footer);
+                                };
+                            //};
+                        }
+                        ret[elem] = this['$'+elem];
+                        
+                    }
                     //this.apply(this.element);
-                    this.initHeader();
+                    return ret;
+                },
+                
+                clear: function(elements){
+                    if (elements === true) {
+                        this.element.contents().remove();
+                        this.$body = null;
+                        this.$footer = null;
+                        this.$header = null;
+                    }else{
+                        if (!elements) {
+                            elements = ['body']
+                        }
+                        for (var _element in elements) {
+                            var element = elements[_element];
+                            if (!this['$' + element]) {
+                                continue
+                            }
+                            this['$' + element].remove(); // TODO: detach?
+                            this['$' + element] = undefined;
+                        }
+                    }
                 },
 
                 initHeader: function(){
@@ -706,13 +787,17 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     //$this.initWidgetStructure();
                 },
                 
+                getCurrentStateHash: function(){
+                    return this.options.scope.generateIdentifier()
+                },
+                
                 reload: function(settings){
                     var reload_code = settings.reload_code,
                         callback = settings.callback,
                         $this = this,
                         $parent = this.element.parent(),
                         position = this.element.offset(),
-                        identifier = this.options.scope.generateIdentifier();
+                        identifier = this.getCurrentStateHash();
                     this.options.scope.log.debug('reloading as', identifier)
                     if (reload_code === true || (reload_code && reload_code.length && reload_code.indexOf('js'))) {
                         this.options.scope.unload_required(function(){

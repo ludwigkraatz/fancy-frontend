@@ -127,7 +127,6 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             }
         },
         
-        
         set_options: function (widget, options){
             var $widget = this.$(widget);
             $widget.data(this.config.appName + '-widget-options', $.extend({}, options));
