@@ -82,7 +82,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     initializing = false;
                 
                 if (this.activeViews[currentViewIdentifier] !== undefined) {
-                    console.log('cached', currentViewIdentifier, this.activeViews[currentViewIdentifier])
+                    this.log('(view)', 'cached', currentViewIdentifier, this.activeViews[currentViewIdentifier])
                     return false// nothing to do
                 }
                 if (!this.options.attached && this.element.hasClass(config.frontend_generateClassName('state-active-proxy'))) {
