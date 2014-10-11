@@ -281,6 +281,11 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         var _AttrMixin = {
             init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships){
                 var $this = this;
+                
+                if (!mixinConfig.data.autoSave || mixinConfig.data.autoSave.constructor != Array) {
+                    mixinConfig.data.autoSave = mixinConfig.data.autoSave ? [mixinConfig.data.autoSave] : false
+                }
+                
                 this.options.scope._prepareAttr(name, initialValue, attrReference, asPrimary)
                 
                 var accessables = [name, name +'List'];
@@ -288,7 +293,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     var _name = accessables[index];
                     this.options[_name] = this.options.scope['_' + _name];
                     this.log('option', _name, this.options.scope['_' + _name]);
-                    this.options.scope['_' + _name].bind('replaced', _AttrMixin.replacedHandler.bind(this, _name));
+                    this.options.scope['_' + _name].bind('replaced', _AttrMixin.replacedHandler.bind(this, mixinConfig, _name));
                 }
                 if ($this.options.scope['__'+name+'Reference']) {
                     $this.options[name+'Relationship'] = $this.options.scope['__'+name+'Reference'];
@@ -297,15 +302,33 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     $this.options[name + 'RelationshipsAllowed'] = defaultRelationships;
                 }
                 this.options.scope._initAttr(name);
+
+                var unwatch = [];  // TODO: is this needed at some point? unwatch[*]()
+                for (var index in mixinConfig.data.autoSave) {
+                    var attr = mixinConfig.data.autoSave[index];
+                    if (!attr) {
+                        continue
+                    }
+                    unwatch.push($this.options.scope.$watch(name + '.' + attr, function(){
+                        var target = attr == '*' ? undefined : attr;
+                        if (!$this.options[name].isBlank() && $this.options[name].needsSave(target)){
+                            $this.options[name].save(target)
+                        }
+                    }))
+                }
             },
             
-            replacedHandler: function(name, event, obj){
+            replacedHandler: function(mixinConfig, name, event, obj){
                 var $this = this;
                 $this.log('updating option "'+name+'" with', obj)
+                
                 var newObj = obj;//obj.isBlank() ? null : obj;
                 if (newObj !== $this.options[name]) {
                     $this.options[name] = newObj;
-                    $this.trigger('option-changed.' + name, [newObj])
+                    $this.trigger('option-changed.' + name, [newObj]);
+                    if (mixinConfig.data.autoLoad && !newObj.isBlank()) {
+                        newObj.load({});
+                    }
                 }
             }
         };
