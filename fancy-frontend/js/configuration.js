@@ -54,7 +54,7 @@ define(['fancyPlugin!jquery'], function($){
             return this.frontend_prefix_css() + name
         },
         'frontend_generateErrorCode': function(name){
-            return this.frontend.generateClassName(name)
+            return this.frontend_generateClassName(name)
         },
         'forJS': function(){
             return {

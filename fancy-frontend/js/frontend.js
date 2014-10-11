@@ -212,8 +212,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             if (this.authEndpointHost == null) {
                 throw Error("Refreshing Credentials needs the this.authEndpointHost to be set")
             }
-            this.ajax.ajax({
-                url: this.authEndpointHost + 'credentials/',
+            this.endpoint.ajax.ajax({
+                url: this.authEndpointHost + 'auth/',
                 type: 'post', //CSRF
                 data: settings.forceRefresh ? {action:'revalidate'} : {action:'get'},
                 addCsrfHeader: true,
