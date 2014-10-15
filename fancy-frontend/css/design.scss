@@ -151,9 +151,9 @@ $zoom: null;
 }
 
 %headerDesign {
-    height: 15px;
-    background: rgba(100, 100, 100, .2);
-    width: 100%;
+    //height: 15px;
+    //background: rgba(100, 100, 100, .2);
+    //width: 100%;
     margin: 0px;
     text-align: center;
     padding: 0px;
@@ -379,20 +379,24 @@ $zoom: null;
 // design elements
 
 
-@mixin hasActionHeader {
-    > .#{$frontend-prefix}header {
-        @extends headerDesign;
-        display: none;
-    }
-}
 
 @mixin hasHeader {
     > .#{$frontend-prefix}header {
-        @extends headerDesign;
+        @extend %headerDesign;
         display: block;
     }
     > thead.#{$frontend-prefix}header {
         display: table-row;
+    }
+    > td.#{$frontend-prefix}header {
+        display: table-cell;
+    }
+}
+
+@mixin hasActionHeader {
+    @include hasHeader;
+    > .#{$frontend-prefix}header {
+        display: none;
     }
 }
 
@@ -523,7 +527,8 @@ $zoom: null;
 }
 
 @mixin popupDesign {
-    @extend widgetDesign;
+    //@include widgetDesign;
+    @include hasHeader;
     z-index:10000;
     width:  638px;
     max-height: 80%;
