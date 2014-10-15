@@ -401,12 +401,12 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     this.options.widgetCore.load_dependencies(dependencyConfig);
                 },
                 
-                popUp: function(callback){
-                    this.options.widgetCore.popUp({
-                        widgetCore: this.options.widgetCore,
+                popUp: function(callback, options){
+                    options = $.extend({}, options, {
                         body: this.$body,
                         callback: callback
-                    })
+                    });
+                    this.options.widgetCore.popUp(options)
                 },
                 
                 seperate: function(callback){
@@ -577,7 +577,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             this.use_mixin('draggable');
                             //  attach to container
                         }
-                        if ([this._widgetConfig.name_shape_widget, this._widgetConfig.name_shape_container, this._widgetConfig.name_shape_page].indexOf(this.options.shape) != -1) {
+                        if ([this._widgetConfig.name_shape_widget, this._widgetConfig.name_shape_container, this._widgetConfig.name_shape_page, this._widgetConfig.name_shape_popup].indexOf(this.options.shape) != -1) {
                             this.use_mixin('loading');
                         }
                     }
@@ -750,12 +750,17 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         this.$body.html(data)
                     }*/
                     var $this = this,
+                        $data;
+                    if (data instanceof $){
+                            $data = data;
+                    }else {
                         $data = $('<div>'+data+'</div>');
-                    $data.find('[load-widget],[load-plugin]').each(function(index, element){
-                        var $element = $(element);
-                        $this.options.widgetCore.set_options($element, {content:$element.html()})
-                        $element.contents().remove();
-                    })                    
+                        $data.find('[load-widget],[load-plugin]').each(function(index, element){
+                            var $element = $(element);
+                            $this.options.widgetCore.set_options($element, {content:$element.html()})
+                            $element.contents().remove();
+                        })
+                    };
                     
                     // handle them seperatly, to give mixins more control
                     var $body, $header, $footer;

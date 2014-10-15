@@ -12,7 +12,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 _destroy: function(){
                     if (this.element.data("__initialized") && this.options.callback) {
-                        this.options.callback.apply(this);
+                        this.options.callback();
                     }
                     
                     this._superApply( arguments );
@@ -27,7 +27,6 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         throw new Error('the "fancy_frontend.popup" needs a widget_url or iframe_url option');
                     }*/
                     this.options.shape = this._widgetConfig.name_shape_popup;
-                    
                     this._superApply( arguments );
                     
                     var $this = this;
@@ -88,7 +87,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         var response = '<div><iframe style="height:150px;width:550px;margin-top:-40px;" src="'+this.options.iframe_url+'"/></div>';
                         this.getInitPopupHandler(this)(response)
                     }else if (this.options.body) {
-                        this.$body.html(this.options.body);
+                        this.$body.append(this.options.body);
                     }
                     
                 },

@@ -5,18 +5,18 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
         this.init.apply(this, arguments);
     }
     var FrontendEndpointPrototype = {
-        xhrFailHandlerMap: {
+        xhrHandlerMap: {
                 503:{
-                    'maintenance':function(context){
+                    'MAINTENANCE':function(context){
                         context.this.widgetCore.showMaintenance(responseJSON);
                     }
                 },
                 401:{
-                    'auth missing':function(context){
+                    'AUTHENTICATION MISSING':function(context){
                                         if (!context.apiClient.locked) {
                                                 context.apiClient.lock();
                                                 context.this.widgetCore.openPopupFromResponse(
-                                                    context.error,
+                                                    context.code,
                                                     context.response,
                                                     context.methodMap.processInteraction
                                                 )   
@@ -29,7 +29,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             },
         
         init: function(){
-            this.widgetCore = [].splice.call(arguments, 0, 1);
+            this.widgetCore = [].splice.call(arguments, 0, 1)[0];
             this._parentClass.prototype.init.apply(this, arguments);
         },
         
@@ -42,7 +42,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
 
     $.extend(FrontendCore.prototype, {
         $: $,
-
+        popUp_from_body: true,
         init: function(settings, coreApp){
             var $this = this;
             this.log_info('init frontendCore' + (coreApp ? ('with coreApp=' + coreApp) : ' as coreApp'))
@@ -50,6 +50,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             this.__scope = null;
             this.__log = null;
             this.__initialized = false;
+            this.$root_element = null;
             
             var $this = this;
             if (settings) {
@@ -212,13 +213,14 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             if (this.authEndpointHost == null) {
                 throw Error("Refreshing Credentials needs the this.authEndpointHost to be set")
             }
-            this.endpoint.ajax.ajax({
+            return this.endpoint.refreshCredentials();
+            var id = this.endpoint.ajax.ajax({
                 url: this.authEndpointHost + 'auth/',
                 type: 'post', //CSRF
                 data: settings.forceRefresh ? {action:'revalidate'} : {action:'get'},
                 addCsrfHeader: true,
                 ignoreLock: true,
-                done: function(response, status, xhr){
+                success: function(response, status, xhr){console.log(33)
                     $this.setCredentials(response);
                     if (settings.callback){
                         if (settings.expectsResult) {
@@ -232,7 +234,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
                         }
                     }
                 },
-                fail: function(xhr){
+                error: function(xhr){console.log(44)
                     if (settings && settings.callback){
                         if (settings.expectsResult) {
                             settings.callback({auth: false});
@@ -243,7 +245,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
 
                     $this.get_failed_xhr_handler(config.dialog_generateWording('API.CLIENT.ERROR.PLEASE_REFRESH'))(xhr)
                 }
-            })
+            });
+            console.log(22, id)
         },
 
         destroy: function(selector){
@@ -510,7 +513,16 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
         },
 
         openPopupFromResponse: function(code, response, callback){
-            return this.openPopup(code, callback, response);
+            var $this = this;
+            code = code.replace(' ', '_').toLowerCase();
+            if (['AUTHENTICATION MISSING'].indexOf(code)) {
+                code = 'login';
+            }
+            console.log(code);
+            response.callback = callback
+            response.widgetCore = this;
+            
+            this.openPopup(code, callback, {widgetIdentifier: 'fancy-frontend.' + code, callback: callback, options:response});
         },
 
         get_globalWarning_handler: function($this){
@@ -518,15 +530,42 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
         },
 
         buildPopupWidget: function(){
-            var ret  = '<div class="'+config.frontend_generateClassName('popup-window')+'" ';
-            ret     += config.frontend_generateAttributeName('widget-name') + '="popup"';
+            var ret  = '<div load-widget="fancy-frontend.popup" ';
+            //ret     += config.frontend_generateAttributeName('widget-name') + '="popup"';
             ret     += ' ></div>';
 
             return ret;
         },
 
-        openPopup: function(popupKind, callback, params){
+        openPopup: function(popupKind, _callback, params){
             var $this = this;
+            if (!params) {
+                params = {}
+            }
+            _callback = _callback || params.callback;
+            var callback = _callback
+            $popup = $('<div></div>');
+            if (params.widgetIdentifier) {
+                params.options.callback = function (result){
+                    if (callback)callback(result);
+                    $popup.popup('destroy');
+                }
+                $content = $('<div></div>');
+                this.create_plugin($content,  params.widgetIdentifier, params.options);
+                params.content = $content;
+                //$popup.append(params.content);
+                //delete params.content;
+            }
+            
+            params.widgetCore = this;// TODO: do this with this.add_widget()
+            params.callback = callback
+            this.create_plugin($popup, 'fancy-frontend.popup', params);
+            var $target = this.popUp_from_body ? $('body') : $($this.$root_element);
+            
+            this.__scope.apply($popup, function(content){
+                $target.prepend(content)
+            })
+            return;
             require(['fancyPlugin!widget:fancy-frontend:popup'], function($){
                 var $popup = $this.$root_targets.find(config.frontend_generateSelector('popup-window'));
     
@@ -547,16 +586,18 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
                 }
     
                 $popup = $popup.first();
-    
+
+                $popup.popup(params);
+                return
                 if (popupKind == config.frontend_prefix_css() + 'content') {
                     $popup.popup(params);
                 }else if (popupKind == config.frontend_prefix_css() + 'tos-missing') {
                     $popup.tos_popup(params);
-                }else if (popupKind == config.frontend_prefix_css() + 'auth-missing') {
+                }else if (popupKind ==  'auth-missing') { //config.frontend_prefix_css() +
                     if (params.authMethod == config.frontend_prefix_css() + 'auth-saml2') {
                         $popup.saml2_popup(params);
-                    }else if (params.authMethod == config.frontend_prefix_css() + 'auth-password') {
-                        // todo
+                    }else if (params.authMethod == 'auth-password') { // config.frontend_prefix_css() + 
+                        $popup.popup(params);
                     }else{
                         throw new Error('authentication method "'+params.authMethod+'" unknown')
                     }
@@ -568,7 +609,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
         },
         
         popUp: function(options){
-            return this.openPopup(config.frontend_prefix_css() + 'content', undefined, options);
+            return this.openPopup(config.frontend_prefix_css() + 'content', options.callback, options);
         },
 
         termsOfService_denied: function(){
