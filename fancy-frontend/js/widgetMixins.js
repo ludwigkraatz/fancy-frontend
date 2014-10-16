@@ -316,6 +316,12 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                             $this.options[name].save(target)
                         }
                     }, true))
+                    unwatch.push($this.options.scope.$watch(name + '.' + attr + 'List', function(){
+                        var target = attr == '*' ? undefined : attr;
+                        if (!$this.options[name + 'List'].isBlank() && $this.options[name + 'List'].needsSave(target)){
+                            $this.options[name + 'List'].save(target)
+                        }
+                    }, true))
                 }
             },
             
@@ -339,6 +345,15 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             init: function(mixinConfig, initialValue, asPrimary, defaultRelationships){
                 var $this = this;
                 
+                this.options.scope.$watch('__resourceAsNew', function(val, oldVal){
+                    if (val) {
+                        $this.trigger($this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['create']);
+                    }else{
+                        if (oldVal) { // TODO: show 'default'
+                            $this.trigger($this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['detail']);
+                        }
+                    }
+                })
                 _AttrMixin.init.call(
                                      this,
                                      mixinConfig,
