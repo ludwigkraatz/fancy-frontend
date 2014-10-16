@@ -4,7 +4,8 @@ define(['fancyPlugin!widget:fancy-frontend:resource_interface', 'fancyPlugin!fan
         $.widget( config.apps['fancy-frontend'].namespace + '.development_interface', $[config.apps['fancy-frontend'].namespace].resource_interface, {
 
             _create: function(){
-                this.mixins.resource = this._widgetConfig.mixins.DevelopmentResourceMixin;
+                this.use_mixin('view'); // to keep inter-mixin dependency order
+                this.use_mixin('resource', {initialValue: this.object});//this._widgetConfig.mixins.DevelopmentResourceMixin);
                 this._superApply( arguments );
             },
 

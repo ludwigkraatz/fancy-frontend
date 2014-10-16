@@ -23,13 +23,15 @@ define(['fancyPlugin!jquery'], function($){
                     if (this.options.resource &&
                         !this.options.resource.isBlank() &&
                         this.options.scope.__resourceRelationships[_relationship] === undefined) {
-                            this.options.scope.__resourceRelationships[_relationship] = this.options.resource.get('relationship', _relationship);
+                        //throw Error; // TODO
+                            //this.options.scope.__resourceRelationships[_relationship] =
+                            resourceList = this.options.resource.get('relationship', _relationship);
                     }else if (!this.options.scope._resource){
                         var e = Error('missing resource');
                         this.log('(error)', 'missing resource', e)
                         throw e
                     }
-                    resourceList = this.options.scope.__resourceRelationships[_relationship];
+                    resourceList = resourceList ? resourceList : this.options.scope.__resourceRelationships[_relationship];
                 }else if ($this.options.resourceList){/*
                     $this.options.scope.log.debug('setting up list view event proxy');
                     $this.element.on('resourcelist-updated', function(event, resourceList){

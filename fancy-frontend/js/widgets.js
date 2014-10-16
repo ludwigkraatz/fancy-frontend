@@ -215,8 +215,10 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 use_mixin: function(mixin, config){
                     if (this._used_mixins === null) {
                         this._used_mixins = [];
+                        this.__used_mixins = [];
                     }
-                    if (this._used_mixins.indexOf(mixin) == -1) {
+                    if (this.__used_mixins.indexOf(mixin) == -1) {
+                        this.__used_mixins.push(mixin)
                         var mixin_package = [mixin, config];
                         this._used_mixins.push(mixin_package)
                         if (this.element.data('__initialized')) {

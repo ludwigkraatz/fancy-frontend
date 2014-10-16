@@ -281,6 +281,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         var _AttrMixin = {
             init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships){
                 var $this = this;
+                initialValue = initialValue !== undefined ? initialValue : mixinConfig.data.initialValue;
                 
                 if (!mixinConfig.data.autoSave || mixinConfig.data.autoSave.constructor != Array) {
                     mixinConfig.data.autoSave = mixinConfig.data.autoSave ? [mixinConfig.data.autoSave] : false
@@ -314,7 +315,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         if (!$this.options[name].isBlank() && $this.options[name].needsSave(target)){
                             $this.options[name].save(target)
                         }
-                    }))
+                    }, true))
                 }
             },
             
