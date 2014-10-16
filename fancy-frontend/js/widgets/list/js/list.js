@@ -147,6 +147,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                             $this.$header.find($this._widgetConfig.selector_elements_header).append(createLink);
                                             createLink.click(function(event){
                                                 event.preventDefault();
+                                                $this.createNew();
+                                                return;
                                                 var view;
                                                 if ($this.asTable) {
                                                     view = 'popup';
@@ -543,6 +545,44 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }
                 },
                 
+                createEntry: function(elem){
+                    var $this = this;
+                    var tag = $this.asTable ? 'tr' : 'div';
+                    var curOutput = '<'+tag+' class="dynamic-list-entry" ',
+                        elem_id = '!';
+                    if (elem) {
+                        elem_id = $this.getIdForEntry(elem);
+                        curOutput += 'data-dynamic-list-entry-id="'+elem_id+'">';
+                        
+                        if ($this.$list.data('entry-' + elem_id) != undefined) {
+                            curOutput += $this.$list.data('entry-' + elem_id);
+                        }
+                    
+                    }
+                    curOutput += '</'+tag+'>'
+                    curOutput = $(curOutput);
+                    //curOutput.selectable();
+                    //curOutput.attr('plugin-reference', '__id_'+elem_id);
+                    //$this.options.scope['__id_'+elem_id] = elem;
+                    $this.options.widgetCore.create_widget(
+                                                           curOutput,
+                                                           $this.options.entryWidget+':'+ elem_id,
+                                                           {
+                                                            content: $this.options.entryTemplate
+                                                           });
+                    if (elem) {
+                        return curOutput
+                    }else{
+                        this.apply(curOutput, function(content){
+                            $this.$container.prepend(content);
+                        })
+                    }
+                },
+                
+                createNew: function(){
+                    this.createEntry();
+                },
+                
                 get_showList_handler: function($this, page, letter){
                     return function(data){
                         
@@ -556,26 +596,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         })
                         var output = [];
                         $.each(data, function(index, elem){
-                            elem_id = $this.getIdForEntry(elem);
-                            var tag = $this.asTable ? 'tr' : 'div';
-                            var curOutput = '<'+tag+' class="dynamic-list-entry" data-dynamic-list-entry-id="'+elem_id+'">';
-                            
-                            if ($this.$list.data('entry-' + elem_id) != undefined) {
-                                curOutput += $this.$list.data('entry-' + elem_id);
-                            }
-                            
-                            curOutput += '</'+tag+'>'
-                            curOutput = $(curOutput);
-                            //curOutput.selectable();
-                            //curOutput.attr('plugin-reference', '__id_'+elem_id);
-                            //$this.options.scope['__id_'+elem_id] = elem;
-                            $this.options.widgetCore.create_widget(
-                                                                   curOutput,
-                                                                   $this.options.entryWidget+':'+ elem_id,
-                                                                   {
-                                                                    content: $this.options.entryTemplate
-                                                                   });
-                            output.push(curOutput);
+                            output.push($this.createEntry(elem));
                         });
                         $container.prepend(output);
                         $this.apply($container)
