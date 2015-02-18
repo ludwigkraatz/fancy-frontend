@@ -87,14 +87,15 @@ define(['fancyPlugin!jquery'], function($){
                                 $this.options.scope.log.debug('todo: zoom into this entry');
                             })*/
                             
-                            var $seperate = $('<a href="#"> > </a>');
-                            $seperate.click(function(event){
+                            var $focus = $('<a href="#"></a>');
+                            $focus.addClass(config.frontend_generateClassName('action-focus'));
+                            $focus.click(function(event){
                                 $this.seperate();
                                 event.preventDefault();
                                 //event.stopImmediatePropagation();
                                 return false
                             })
-                            $this.$footer.html($seperate)
+                            $this.$footer.html($focus)
                         }else{
                             if (!$this.$body.html()) {
                                 $this.log('plain')

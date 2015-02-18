@@ -263,6 +263,10 @@ table.#{$frontend-prefix}instance {
     @include iconMixin_add;
     @include actionMixin;
 }
+.#{$frontend-prefix}action-focus{
+    @include iconMixin_expand;
+    @include actionMixin;
+}
 .#{$frontend-prefix}action-check{
     @include iconMixin_check;
     @include actionMixin;

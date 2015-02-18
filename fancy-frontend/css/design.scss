@@ -214,6 +214,11 @@ $zoom: null;
     background-position: -2px -2px;
 }
 
+@mixin iconMixin_expand{
+    @include iconMixin;
+    background-image: url($img-root+'icons/expand.svg');
+}
+
 @mixin iconMixin_close{
     @include iconMixin;
     background-image: url($img-root+'icons/x1.svg')
