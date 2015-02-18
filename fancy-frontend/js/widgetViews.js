@@ -26,8 +26,13 @@ define(['fancyPlugin!jquery'], function($){
                         this.options.scope.__resourceRelationships[_relationship] === undefined) {
                         //throw Error; // TODO
                             //this.options.scope.__resourceRelationships[_relationship] =
-                            resourceList = this.options.resource.get('relationship', _relationship);
-                    }else if (!this.options.scope._resource){
+                        resourceList = this.options.resource.get('relationship', _relationship);
+                    }else if (this.options.scope._resource && !this.options.scope._resource.isBlank()){
+                        resourceList = this.options.scope._resource.get('relationship', _relationship);
+                    }else if (this.options.scope.__endpoint && _relationship == ('-' + this._widgetConfig.relationships.instance_of)){
+                        resourceList = this.options.scope.object({target: 'relationship', data: null});
+                        _relationship = null;
+                    }else {
                         var e = Error('missing resource');
                         this.log('(error)', 'missing resource', e)
                         throw e
@@ -45,13 +50,13 @@ define(['fancyPlugin!jquery'], function($){
                     throw e
                 }
                 var _listConfig = {};
-                $.extend(_listConfig, listConfig, {
+                $.extend(_listConfig, {
                     resourceList: resourceList,
                     source: source,
                     entryWidget: this.options.scope.__widgetNamespace + '.' + this.options.scope.__widgetName,
                     entryTemplate: this.options.content ? this.options.content : null,
                     allowedRelationships: this.options.resourceRelationshipsAllowed,
-                });
+                }, listConfig);
 
                 $this.options.widgetCore['create_' + create_as](
                                                        $body,
