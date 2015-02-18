@@ -13,7 +13,8 @@ define(['fancyPlugin!jquery'], function($){
                     resourceList,
                     source = null,
                     _relationship,
-                    create_as = 'plugin';
+                    create_as = 'plugin',
+                    listConfig = (mixinConfig.data ? (mixinConfig.data.listConfig) : null) || {};
 
                 if (!!_data && _data.constructor == Array) {
                     sources = _data;
@@ -43,17 +44,19 @@ define(['fancyPlugin!jquery'], function($){
                     this.log('(error)', 'missing list source', e, _data)
                     throw e
                 }
+                var _listConfig = {};
+                $.extend(_listConfig, listConfig, {
+                    resourceList: resourceList,
+                    source: source,
+                    entryWidget: this.options.scope.__widgetNamespace + '.' + this.options.scope.__widgetName,
+                    entryTemplate: this.options.content ? this.options.content : null,
+                    allowedRelationships: this.options.resourceRelationshipsAllowed,
+                });
 
                 $this.options.widgetCore['create_' + create_as](
                                                        $body,
                                                        'fancy-frontend.list'+(_relationship ? '<'+_relationship+'>' : '')+'' + (_relationship ? ':'+_relationship : ''),
-                                                       {
-                                                            resourceList: resourceList,
-                                                            source: source,
-                                                            entryWidget: this.options.scope.__widgetNamespace + '.' + this.options.scope.__widgetName,
-                                                            entryTemplate: this.options.content ? this.options.content : null,
-                                                            allowedRelationships: this.options.resourceRelationshipsAllowed,
-                                                        });
+                                                       _listConfig);
                 
                 $this.apply($body);
                 /*if ($this.options.resourceList) {
