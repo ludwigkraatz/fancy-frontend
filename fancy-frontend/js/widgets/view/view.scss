@@ -1,3 +1,18 @@
 @import 'consts';
 @import 'design';
 
+
+
+.#{$frontend-prefix}object-view {
+    .#{$frontend-prefix}navigation {
+        svg {
+            fill: transparent;
+        }
+        .#{$frontend-prefix}state-active {
+            svg {
+                fill: blue;
+            }
+        }
+    }
+    
+}

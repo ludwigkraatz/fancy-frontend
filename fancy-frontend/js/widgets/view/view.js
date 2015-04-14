@@ -26,6 +26,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 this.element.on('replace', this.showViewHandler.bind(this, true, false));
                 this.element.on('clear', this.clearViewHandler.bind(this, false));
                 this.element.on('remove', this.clearViewHandler.bind(this, true));
+                this.element.on('page', this.updateViewHandler.bind(this));
                 
                 if (this.options.initView) {
                     this.element.trigger((this.options.initView.popup ? 'popup' : 'show'), [
@@ -38,6 +39,61 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }else{
                     this.element.trigger('end-initializing');
                 }
+            },
+            
+            updateViewHandler: function(
+                                        event,
+                                        currentViewIdentifier,  // see showViewHandler
+                                        page                    // next | previous | A | 1 | 2 | 3.1 | 4.2.1 | ...
+            ){
+                event.stopImmediatePropagation();
+                var view = this.views[ currentViewIdentifier ];
+                view.paginationConfig.showPageHandler(page)
+                var stateActive = config.frontend_generateClassName('state-active');
+                this.$pagination.find('.' + stateActive).removeClass(stateActive);
+                this.$pagination.find('[' + config.frontend_generateAttributeName('page-identifier') + '=' + page + ']').addClass(stateActive);
+            },
+            
+            updatePaginationHandler: function(
+                                        currentViewIdentifier,  // see showViewHandler
+                                        pages                   // next | previous | A | 1 | 2 | 3.1 | 4.2.1 | ...
+            ){
+                var view = this.views[ currentViewIdentifier ];
+                if (typeof pages == 'number') {
+                    pages = Array.apply(null, Array(pages)).map(function (_, i) {return i+1;});
+                }
+                var display = view.paginationConfig.display || 'text';
+                    currentPage = view.paginationConfig.currentPage !== null ? view.paginationConfig.currentPage | pages[0] : null
+                
+                if (!this.$pagination) {
+                    var $pagination = $('<div class="'+config.frontend_generateClassName('navigation')+'"></div>');
+                    for (var i in pages) {
+                        var page = pages[i],
+                            page_action = $('<div></div>');
+                        page_action.addClass(config.frontend_generateClassName('action'));
+                        if (page == currentPage) {
+                            page_action.addClass(config.frontend_generateClassName('state-active'))
+                        }
+                        page_action.attr(config.frontend_generateAttributeName('page-identifier'), page)
+                        
+                        if (display == 'text') {
+                            page_action.html(page);
+                        } else if (display == 'dots') {
+                            var dot = '<svg height="10" width="10"><circle cx="5" cy="5" r="4" stroke="black" stroke-width="1" />';
+                            page_action.html(dot);
+                        }
+                        
+                        page_action.click(this.element.trigger.bind(this.element, 'page', [currentViewIdentifier, page]))
+                        $pagination.append(page_action);
+                    }
+                    this.$pagination = $pagination;
+
+                    var $target = view.paginationConfig.target || this.element;
+                    if ($target) {
+                        $target.append($pagination);
+                    }
+                }
+                
             },
             
             isFull: function(){
@@ -88,8 +144,26 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         setContent,             // method that updates its own access, to the now cloned
                                                                 // elements defined in showElements
                                         reloadContent,          // method that might be called if no cached content available
-                                        cache                   // boolean that tells whether to cache content or not
-                                        ){
+                                        cache,                  // boolean that tells whether to cache content or not
+                                        paginationConfig        // object containing the following options:
+                                                                // target:              - $() element
+                                                                // display:
+                                                                //      text:           - displays as text as given in paginationConfig.pages
+                                                                //      breadcrumb      - like text, but as breadcrumbs
+                                                                //      dots            - little dots, symbolizing the pages (use not recommended for pages.length > 10)
+                                                                // detail:
+                                                                //      -1:  isolated   - only show pagination of current view (default for popups)
+                                                                //      0: | group      - only show pagination of available groups
+                                                                //      1: | active     - only show pagination of available groups including subgroups for active group
+                                                                //      2: | all        - show pagination for all groups and subgroups
+                                                                // pages:               - list of available pages or integer defining [1,2,...].length
+                                                                //                      - or handler, that accepts a view method to be called on pages updates/and initialization
+                                                                // showPageHandler: (   - method to call on page change
+                                                                //      page_identifier - one of the elements from the pages list
+                                                                // )
+                                                                // currentPage:         - default: first.
+                                                                //                      - if function, a method changePage(page_identifier) is passed
+                ){
                 event.stopImmediatePropagation();
 
                 var viewIdentifier;
@@ -162,6 +236,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     view['initialViewData'] = viewData;
                     view['viewData'] = viewData;
                     view['viewIdentifier'] = viewIdentifier;
+                    view['paginationConfig'] = paginationConfig
                     var clonedElements = view['elements'] = {};
                     for (element in showElements){
                         var origElement = showElements[element],
@@ -197,6 +272,26 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }
                 if (needsReload && reloadContent) {
                     reloadContent()
+                }
+                if (paginationConfig) {
+                    if (typeof paginationConfig.pages == 'function') {
+                        paginationConfig.pages(this.updatePaginationHandler.bind(this, currentViewIdentifier))
+                    }else{
+                        this.updatePaginationHandler(currentViewIdentifier, paginationConfig.pages)
+                    }
+                    
+                    if (typeof paginationConfig.currentPage == 'function') {
+                        paginationConfig.currentPage(
+                            this.element.trigger.bind(this.element, 'page', [
+                                          currentViewIdentifier
+                                          ])
+                        )
+                    }else if (paginationConfig.currentPage === null) {
+                        this.element.trigger('page', [
+                                      currentViewIdentifier,
+                                      1
+                                      ])
+                    }
                 }
                 if (initializing) {
                     this.element.trigger('end-initializing');
