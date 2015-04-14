@@ -97,10 +97,15 @@ define(function(base){
      */
     getVersion: function(module, path, config)
     {
-        return 1 // TODO: implement
         var paths = path.split('/');
-        var fileName = paths[paths.legth-1];
-        var version = config.versions[module][path];
+        var fileName = paths[paths.legth-1],
+            version;
+        if (config.versions[module] !== undefined) {
+            version = config.versions[module][path];
+        }else{
+            version = 0;
+        }
+        
         return version
     },
 
@@ -116,7 +121,8 @@ define(function(base){
         var paths = path.split('/');
         var fileName = paths[paths.length-1];
         var version = this.getVersion(module, path, config);
-        return path + '/' + version + '/' + fileName
+        var version_root = config.structure.version.root || '';
+        return version_root + path + '/' + version + '/' + fileName
     },
 
     /**
@@ -146,10 +152,10 @@ define(function(base){
     path: function(path, config, module)
     {
       var prefix = config.structure.prefix;
-      path = this.asVersioned(module, path, config);
-      return prefix.replace(/{module}/g,
+      path = prefix.replace(/{module}/g,
         (module || this.getCurrentModule(config))
       ) + path;
+      return this.asVersioned(module, path, config);
     },
 
     /**
