@@ -16,6 +16,12 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     mixinConfig.elements = mixinConfig.data.elements || ['body'];
                     ViewMixin.setupLazyView.call($this, mixinConfig); 
                     this.setupMixinHandlers(ViewMixin.event_prefix, this.views);                    
+                    if (mixinConfig.data.navigation) {
+                        ViewMixin.setupNavigation.call($this, mixinConfig.data.navigation);
+                        this.on('init-widget-structure-done.header, init-widget-structure-done.footer', function(event){
+                            ViewMixin.setupNavigation.call($this, mixinConfig.data.navigation);
+                        })
+                    }
                     
                     // init active view
                     if ($this.options.defaultView) {
@@ -27,6 +33,49 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                             if (ViewMixin.setDefaultView.call($this) === false){
                                 $this.setDefaultView()
                             }
+                        }
+                    }
+                },
+                
+                
+                setupNavigationEntry: function(menu_attr_name, menu, index, translation){
+                    this.options.scope[menu_attr_name][index] = {
+                        id: index,
+                        label: translation,
+                        entry: menu[index]
+                    };
+                },
+                
+                setupNavigation: function(navigation){
+                    var $this = this,
+                        menu = navigation.menu || [],
+                        menu_translation_prefix = '',
+                        menu_attr_name = 'navigation';
+                    if (menu.length) {
+                        this.options.scope[menu_attr_name] = [];
+                        $this.$menu = this.newElement({
+                            css_class: 'navigation',
+                            tag: 'ul',
+                            widget_identifier: 'fancy-frontend.list',
+                            widget_options: {
+                                source: this.options.scope[menu_attr_name],
+                                onSelect: function(entry){
+                                    $this.element.trigger(ViewMixin.event_prefix + '-show', ['widget', entry])
+                                },
+                                entryTemplate: '<a href="#" ><span class="'+config.frontend_generateClassName('action')+' '+config.frontend_generateClassName('action-')+'{{ _source.{index}.entry.icon }}"></span><span class="'+config.frontend_generateClassName('title')+'" translate="{{ _source.{index}.label }}"></span></a>',
+                                entryTag: 'li',
+                                inline: true,
+                                size: config.frontend_generateClassName('size-small'),
+                                selectFirst: true,
+                                view: navigation.view,
+                            },
+                            target: navigation.target || $(this.$header, this.$footer),
+                        })
+                        for (var index=0; index < menu.length; index++) {
+                            //$this.translate(menu_translation_prefix + menu[index].translation_identifier,
+                            //                ViewMixin.setupNavigationEntry.bind($this, menu_attr_name, menu, index)
+                            //);
+                            ViewMixin.setupNavigationEntry.call($this, menu_attr_name, menu, index, menu_translation_prefix + menu[index].translation_identifier)
                         }
                     }
                 },
