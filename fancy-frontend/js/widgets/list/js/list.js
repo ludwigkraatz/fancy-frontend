@@ -8,13 +8,19 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     pagination_asAlphabet: false,
                     pagination_asPages: false,
                     pagination_asInfinite: false,
+                    entriesPerPage: null,
+                    alphabet: ['-', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+                    use_view: true,
                     headerFields: ['uuid', 'data'],
                     resource: null,
                     allowedRelationships: null,
                     resourceList: null,
                     source: null,
                     entryWidget: null,
-                    entryTemplate: null
+                    entryTemplate: null,
+                    entryTag: null,
+                    inline: false,
+                    selectFirst: false,
                 },
                 /*
                  *
@@ -32,8 +38,23 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     //this.use_mixin('view');
                     //this.use_mixin('api');
                     this.options.allowedRelationships = this.options.allowedRelationships || ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of];
-                    this.options.shape = this._widgetConfig.name_shape_container;
-                        this._superApply( arguments );
+                    this.element.addClass(this._widgetConfig.name_mixin_container);
+                    
+                    var tag = this.asTable ? 'table' : 'div';
+                    this.page = null;
+                    if (this.options.inline) {
+                        this.$list = this.element
+                    }else{
+                        this.$list = $('<'+tag+'></'+tag+'>');
+                        this.element.html(this.$list);
+                    }
+                    if (this.options.size === null) {
+                        this.options.size = this._widgetConfig.name_size_full;
+                    }
+                    //if (this.options.shape === null) {
+                    //    this.options.shape = this._widgetConfig.name_mixin_container;
+                    //}
+                    this._superApply( arguments );
                     /*if (! this.element.hasClass('dynamic-list')) {
                         throw new Error('the target for "fancy_frontend.dynamic_list" widget needs to have a "dynamic-list" class');
                     }*/
@@ -48,16 +69,12 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         
                     //this.element.data('current_page', 1);
                     //this.updatePagination(1, this.get_lastPage())
-                    
-                    var tag = this.asTable ? 'table' : 'div';
-                    this.$list = $('<'+tag+'></'+tag+'>');
-                    this.element.html(this.$list);
-                    this.$container = $this.$list.find(this._widgetConfig.selector_shape_container);
                     this.$list.off('.dynamic-list', this.get_reload_handler(this));
                     this.$list.addClass(this._widgetConfig.name_classes_list);
                     //this.$list.addClass(this._widgetConfig.name_mixin_container);
                     
                     this.$list.addClass(config.frontend_generateClassName('instance'));
+                    this.$container = this.options.inline ? this.element : $this.$list.find(this._widgetConfig.selector_mixin_container);
                     
                     this.$list.on('dynamic-reload-list.dynamic-list.dynamic-widget', this.get_reload_handler(this));
                     this.$list.on('dynamic-zoom-list-entry.dynamic-list.dynamic-widget', this.get_zoomEntry_handler(this));
@@ -120,19 +137,25 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }*/
                 },
                 
+                initWidgetStructure: function(){
+                    if (!this.options.inline) {
+                        this._superApply( arguments );
+                    }else{
+                        this.$container = this.element;
+                    }
+                },
+                
                 updateConfig: function(){
                     var $this = this;
                     var resourceList;
+                    var viewMixinEventPrefix = $this.mixins.view.event_prefix;
 
                     if (this.options.resourceList && !this.options.resourceList.isBlank()) {
+                        this.log('from resource');
                         resourceList = this.options.resourceList;
                         resourceList.discover({
                             callback: function(result){
                                 var content = result.getContent();
-                                // TODO: do this via cores initWidgetStructure
-                                $this.buildHeader();
-                                $this.buildContainer();
-                                $this.buildFooter();
                                 var $body = $this.$body = $this.element.find($this._widgetConfig.selector_mixin_container);
                                 if (content['Accept-Ranges'] !== undefined) {
                                     // config as discovered
@@ -141,7 +164,6 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                             /*$this.$header.html('<h3>'+content.name+'</h3>');*/
                                         }
                                         // TODO: get this event_prefix better!!
-                                        var viewMixinEventPrefix = $this.mixins.view.event_prefix;
                                         if (content['actions']['POST'] !== undefined) {
                                             var createLink = $('<a href="#" class="'+config.frontend_generateClassName('action-add')+'"></a>');
                                             $this.$header.find($this._widgetConfig.selector_elements_header).append(createLink);
@@ -197,11 +219,18 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                             }
                         })
                     }else if (this.options.source){
-                        $this.$container.html('TODO');
-                        $this.options.scope.log.debug('TODO: implement plain source list');
+                        //$this.$container.html('TODO');
+                        $this.log('TODO', 'TODO: implement plain source list');
+                        if ($this.options.source.length == 0) {
+                            // TODO: make this less static: this.view('create', [resourceList])
+                            $this.trigger(viewMixinEventPrefix + '-show', ['create', {relationship: resourceList}]);
+                        }else{
+                            // TODO: this is a digest dirty fix
+                            setTimeout(function(){$this.goToPage(1);}, 100)
+                        }
                     }else{
                         $this.$container.html('');
-                        $this.options.scope.log.debug('emptying list');
+                        $this.log('emptying list');
                     }
                 },
                 
@@ -218,7 +247,11 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     this.$header.append($header);
                 },
                 
-                buildContainer: function(){
+                initBody: function(){
+                    if (!this.asTable) {
+                        return this._superApply( arguments );
+                    }
+                    
                     var tag = this.asTable ? 'tbody' : 'div';
                     this.$container = this.$list.children(this._widgetConfig.selector_mixin_container);
                     if (this.$container.size() <= 0) {
@@ -227,7 +260,11 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }
                 },
                 
-                buildHeader: function(){
+                initHeader: function(){
+                    if (!this.asTable) {
+                        return this._superApply( arguments );
+                    }
+                    
                     var tag = this.asTable ? 'thead' : 'div';
                     this.$header = this.$list.children(this._widgetConfig.selector_elements_header);
                     if (this.$header.size() == 0) {
@@ -304,7 +341,11 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }
                 },
                 
-                buildFooter: function(){
+                initFooter: function(){
+                    if (!this.asTable) {
+                        return this._superApply( arguments );
+                    }
+                    
                     var tag = this.asTable ? 'tfoot' : 'div';
                     this.$footer = this.$list.children('.'+ this._widgetConfig.name_classes_footer);
                     if (this.$footer.size() == 0) {
@@ -313,7 +354,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }
                     if (this.options.pagination_asInfinite) {
                         this.$footer.append('<div class="loading"></div>');
-                    }else if (this.options.pagination_asPages) {
+                    }else if (this.options.pagination_asPages && !this.options.use_view) {
                         this.$footer.append('<div class="dynamic-pagination">\
                     <div class="dynamic-left dynamic-pagination-pages">\
                         <span class="dynamic-pagination-link-topage-template" data-goto-page="0">\
@@ -400,17 +441,22 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         
                     this.loadPage(
                                             {page: page_nr, letter: letter},
-                                            this.get_showList_handler(this, page_nr, letter)
+                                            this.showList_handler.bind(this, page_nr, letter)
                     );
                 },
                 
                 loadPage: function(settings, callback){             
                     var page = settings.page;
                     paginatedBy = this.options.entriesPerPage;
-                    result = this.options.source;// TODO: .slice((page-1)*paginatedBy, (page)*paginatedBy);
+                    if (!paginatedBy) {
+                        result = this.options.source;
+                    }else{
+                        result = this.options.source.slice((page-1)*paginatedBy, (page)*paginatedBy);
+                    }
                     callback(result);
                 },
                 getLastPageNumber: function(){
+                    // TODO: use this.options.scope.resource.fullLength
                     var fullPages = parseInt(this.options.source.length / this.options.entriesPerPage);
                     var halfFullPage = this.options.source.length % this.options.entriesPerPage > 0 ? 1 : 0;
                     
@@ -513,7 +559,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 getIdForEntry: function(entry){
                     if (['number', 'string'].indexOf(typeof entry) == -1) {
                         // .to_other is not nice...
-                        return entry.to_other ? entry.to_other : (entry.uuid ? entry.uuid : entry.__getID());
+                        return entry.to_other ? entry.to_other : (entry.uuid ? entry.uuid : (entry.__getID ? entry.__getID() : entry.id));
                     }
                     return entry;//.__getID();
                 },
@@ -533,7 +579,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
 
                         $(domEntry).html(ret);
                     }
-                    if (entry_id == entry) {
+                    if (entry_id == entry) { // TODO: and this.options.endoint
                         entry = this.api.object.get('uuid', entry_id);
                         entry.load(function(result){
                             if (result.wasSuccessfull) {
@@ -547,15 +593,19 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 createEntry: function(elem){
                     var $this = this;
-                    var tag = $this.asTable ? 'tr' : 'div';
+                    var tag = $this.options.entryTag ? this.options.entryTag : ($this.asTable ? 'tr' : 'div');
                     var curOutput = '<'+tag+' class="dynamic-list-entry" ',
-                        elem_id = '!';
+                        elem_id = '!',
+                        cached_content;
                     if (elem) {
                         elem_id = $this.getIdForEntry(elem);
                         curOutput += 'data-dynamic-list-entry-id="'+elem_id+'">';
                         
                         if ($this.$list.data('entry-' + elem_id) != undefined) {
-                            curOutput += $this.$list.data('entry-' + elem_id);
+                            cached_content = $this.$list.data('entry-' + elem_id);
+                            if (!$this.options.entryWidget){
+                                curOutput += cached_content;
+                            }
                         }
                     
                     }
@@ -564,13 +614,22 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     //curOutput.selectable();
                     //curOutput.attr('plugin-reference', '__id_'+elem_id);
                     //$this.options.scope['__id_'+elem_id] = elem;
-                    $this.options.widgetCore.create_widget(
-                                                           curOutput,
-                                                           $this.options.entryWidget+':'+ elem_id,
-                                                           {
-                                                            content: $this.options.entryTemplate
-                                                           });
-                    if (elem) {
+                    if ($this.options.entryWidget) {
+                        $this.options.widgetCore.create_widget(
+                                                               curOutput,
+                                                               $this.options.entryWidget+':'+ elem_id,
+                                                               {
+                                                                content: cached_content ? cached_content : $this.options.entryTemplate
+                                                               });
+                    }else if ($this.options.onSelect){
+                        curOutput.html($this.options.entryTemplate.replace(new RegExp('{index}', 'g'), elem_id))
+                        curOutput.on('click', function(){
+                            $this.options.onSelect(elem.entry);
+                            $this.log('open ', elem_id);
+                        });
+                    }
+                    
+                    if (elem || !this.asTable) {
                         return curOutput
                     }else{
                         this.apply(curOutput, function(content){
@@ -583,8 +642,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     this.createEntry();
                 },
                 
-                get_showList_handler: function($this, page, letter){
-                    return function(data){
+                showList_handler: function(page, letter, data){
+                    var $this = this;
                         
                         var $container = $this.$container;
                         $container.find('.dynamic-list-entry').each(function(index, elem){
@@ -600,6 +659,10 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         });
                         $container.prepend(output);
                         $this.apply($container)
+                        
+                        if ($this.options.selectFirst) {
+                            $container.children().first().click();
+                        }
                         /*
                         $.each(data, function(index, elem){
                             elem_id = $this.getIdForEntry(elem);
@@ -612,126 +675,180 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         
                         $this.updatePagination(page, last_page, letter);
                         $this.$list.triggerHandler('dynamic-end-loading');
-                    };
                 },
                     
                 
-                updatePagination: function(number, numbers, letter){                    
-                    // create / delete the links as needed for maximum possible pages
-                    var $number = this.$list.find('.dynamic-pagination-link-topage-template');
-                    var output = new Array();
-                    if (this.options.pagination_asPages) {                    
-                        var number_tmp = 1;
-                        var $number_tmp = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number_tmp+'"]');
-                        while (number_tmp <= numbers || $number_tmp.get(0) != undefined){
-                            if (number_tmp > numbers){
-                                $number_tmp.hide();
-                            }else if ($number_tmp.get(0) != undefined){
-                                $number_tmp.show();
-                            }else{
-                                $number.clone().insertBefore($number).after(" ");
-                                var insert = this.$list.find('.dynamic-pagination-link-topage-template[data-goto-page="0"]:first');
-                                insert.attr('data-goto-page', number_tmp).find('a').attr('href', '?page='+number_tmp).attr('data-goto-page', number_tmp).html(number_tmp);
-                                insert.find('span>strong').html(number_tmp);
-                                insert.show();
-                                insert.addClass('dynamic-pagination-link-topage').removeClass('dynamic-pagination-link-topage-template');
-                                //alert(insert);
+                updatePagination: function(number, numbers, letter){
+                    if (this.page == number)return;
+
+                    var $this = this,
+                        pages,
+                        pages_length,
+                        list_alphabet = this.options.alphabet,
+                        pages_changed = false;
+
+                    if (this.options.pagination_asPages){
+                        pages = parseInt(numbers);
+                        pages_length = pages;
+                    }
+                    else if (this.options.pagination_asAlphabet){
+                        pages = list_alphabet;
+                        pages_length = pages.length
+                    }
+                    
+                    if (this.pages != pages)pages_changed = true;
+
+                    this.page = number;
+                    this.pages = pages;
+
+                    if (this.options.use_view) {
+                        if (this.view_pagination_handler){
+                            if (pages_changed) {
+                                update_pagination_handler(this.pages)
                             }
-                            number_tmp += 1;
-                            $number_tmp = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number_tmp+'"]');
+                        }else if (pages_length > 0){
+                            this.newElement({ // todo: use this.use_mixin('view', {...}) so that existing views might be used
+                                plugin_identifier: 'fancy-frontend.view',
+                                plugin_options: {
+                                    attached: true,
+                                    initView: {
+                                        name: null,
+                                        data: null,
+                                        //elements: this.initWidgetStructure.bind(this, ['body'], false),
+                                        setContent: null,
+                                        reloadContent: null,
+                                        cache: true,
+                                        popup: false,
+                                        paginationConfig: {
+                                            showPageHandler: this.goToPage.bind(this),
+                                            pages: function(update_pagination_handler){
+                                                $this.view_pagination_handler = update_pagination_handler;
+                                                update_pagination_handler($this.pages)
+                                            },
+                                            target: this.$footer
+                                        }
+                                    },
+                                },
+                                target: this.element,
+                                method: 'patch'
+                            })
                         }
-                        
-                        if (numbers > 10){
-                            var number_tmp=4;
-                            while (number_tmp < numbers-3){
-                                var $number_tmp = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number_tmp+'"]');
-                                if ((number_tmp < 4) || (number_tmp > numbers -4) || ((number_tmp > number - 3) && (number_tmp < number + 3))){
-                                    $number_tmp.show()
+                    }else{
+                        // create / delete the links as needed for maximum possible pages
+                        var $number = this.$list.find('.dynamic-pagination-link-topage-template');
+                        var output = new Array();
+                        if (this.options.pagination_asPages) {                    
+                            var number_tmp = 1;
+                            var $number_tmp = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number_tmp+'"]');
+                            while (number_tmp <= numbers || $number_tmp.get(0) != undefined){
+                                if (number_tmp > numbers){
+                                    $number_tmp.hide();
+                                }else if ($number_tmp.get(0) != undefined){
+                                    $number_tmp.show();
                                 }else{
-                                    $number_tmp.hide()
-                                    if (number_tmp == number -3 || number_tmp == number + 3 ){
-                                        $number_tmp.before('<span class="dynamic-pagination-link-topage-seperator"> . . . </span>');
-                                    }
+                                    $number.clone().insertBefore($number).after(" ");
+                                    var insert = this.$list.find('.dynamic-pagination-link-topage-template[data-goto-page="0"]:first');
+                                    insert.attr('data-goto-page', number_tmp).find('a').attr('href', '?page='+number_tmp).attr('data-goto-page', number_tmp).html(number_tmp);
+                                    insert.find('span>strong').html(number_tmp);
+                                    insert.show();
+                                    insert.addClass('dynamic-pagination-link-topage').removeClass('dynamic-pagination-link-topage-template');
+                                    //alert(insert);
                                 }
                                 number_tmp += 1;
+                                $number_tmp = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number_tmp+'"]');
                             }
+                            
+                            if (numbers > 10){
+                                var number_tmp=4;
+                                while (number_tmp < numbers-3){
+                                    var $number_tmp = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number_tmp+'"]');
+                                    if ((number_tmp < 4) || (number_tmp > numbers -4) || ((number_tmp > number - 3) && (number_tmp < number + 3))){
+                                        $number_tmp.show()
+                                    }else{
+                                        $number_tmp.hide()
+                                        if (number_tmp == number -3 || number_tmp == number + 3 ){
+                                            $number_tmp.before('<span class="dynamic-pagination-link-topage-seperator"> . . . </span>');
+                                        }
+                                    }
+                                    number_tmp += 1;
+                                }
+                            }
+                            var $numbers = this.$list.find('.dynamic-pagination-link-topage');
+                            $numbers.find('span').hide()
+                            $numbers.find('a').show()
+                    
+                            var $number = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number+'"]');
+                            $number.find('span').show()
+                            $number.find('a').hide()
+                            
+                        }else if (this.options.pagination_asAlphabet) {
+                            
+                            // styling needs 'undefined' to be string
+                            // further processing needs the undefined object instead
+                            if (letter == undefined) {
+                                letter = 'undefined'
+                            }
+                            
+                            var number_tmp = 1;
+                            var $this = this;
+                            $.each(list_alphabet, function(index, elem){
+                                var $letter_tmp = $this.$list.find('.dynamic-pagination-link-topage[data-filter-letter="'+((elem!=list_alphabet[0])?elem:'undefined')+'"]');
+                                if ($letter_tmp.get(0) != undefined){
+                                    $letter_tmp.show();
+                                }else{
+                                    $number.clone().insertBefore($number).after(" ");
+                                    var insert = $this.$list.find('.dynamic-pagination-link-topage-template[data-goto-page="0"]:first');
+                                    insert.attr(
+                                                'data-goto-page', number_tmp
+                                            ).attr(
+                                                   'data-filter-letter', (elem!=list_alphabet[0])?elem:'undefined'
+                                            ).find(
+                                            'a'
+                                            ).attr(
+                                                   'href', '?'+((elem!=list_alphabet[0])?('letter='+elem+'&'):'')+'page='+number_tmp
+                                            ).attr(
+                                                   'data-goto-page', number_tmp
+                                            ).attr(
+                                                   'data-filter-letter', (elem!=list_alphabet[0])?elem:'undefined'
+                                            ).html(elem);
+                                    insert.find('span>strong').html(elem);
+                                    insert.show();
+                                    insert.addClass('dynamic-pagination-link-topage').removeClass('dynamic-pagination-link-topage-template');
+                                    //alert(insert);
+                                }
+                            });
+                            var $numbers = this.$list.find('.dynamic-pagination-link-topage');
+                            $numbers.find('span').hide()
+                            $numbers.find('a').show()
+                    
+                            var $number = this.$list.find('.dynamic-pagination-link-topage[data-filter-letter="'+letter+'"]');
+                            $number.find('span').show()
+                            $number.find('a').hide()
                         }
-                        var $numbers = this.$list.find('.dynamic-pagination-link-topage');
-                        $numbers.find('span').hide()
-                        $numbers.find('a').show()
-                
-                        var $number = this.$list.find('.dynamic-pagination-link-topage[data-goto-page="'+number+'"]');
-                        $number.find('span').show()
-                        $number.find('a').hide()
                         
-                    }else if (this.options.pagination_asAlphabet) {
                         
                         // styling needs 'undefined' to be string
                         // further processing needs the undefined object instead
-                        if (letter == undefined) {
-                            letter = 'undefined'
+                        if (letter == 'undefined') {
+                            letter = undefined
                         }
                         
-                        var list_alphabet = ['-', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-                        var number_tmp = 1;
-                        var $this = this;
-                        $.each(list_alphabet, function(index, elem){
-                            var $letter_tmp = $this.$list.find('.dynamic-pagination-link-topage[data-filter-letter="'+((elem!=list_alphabet[0])?elem:'undefined')+'"]');
-                            if ($letter_tmp.get(0) != undefined){
-                                $letter_tmp.show();
-                            }else{
-                                $number.clone().insertBefore($number).after(" ");
-                                var insert = $this.$list.find('.dynamic-pagination-link-topage-template[data-goto-page="0"]:first');
-                                insert.attr(
-                                            'data-goto-page', number_tmp
-                                        ).attr(
-                                               'data-filter-letter', (elem!=list_alphabet[0])?elem:'undefined'
-                                        ).find(
-                                        'a'
-                                        ).attr(
-                                               'href', '?'+((elem!=list_alphabet[0])?('letter='+elem+'&'):'')+'page='+number_tmp
-                                        ).attr(
-                                               'data-goto-page', number_tmp
-                                        ).attr(
-                                               'data-filter-letter', (elem!=list_alphabet[0])?elem:'undefined'
-                                        ).html(elem);
-                                insert.find('span>strong').html(elem);
-                                insert.show();
-                                insert.addClass('dynamic-pagination-link-topage').removeClass('dynamic-pagination-link-topage-template');
-                                //alert(insert);
-                            }
-                        });
-                        var $numbers = this.$list.find('.dynamic-pagination-link-topage');
-                        $numbers.find('span').hide()
-                        $numbers.find('a').show()
+                        this.$list.find('.dynamic-pagination a').off('.dynamic-pagination');
+                        this.$list.find('.dynamic-pagination a').on('click.dynamic-widget.dynamic-list.dynamic-pagination', this.get_clickOnPaginationLink_handler(this))
+                        
+                        // show as for current page
+                        this.$list.find('.dynamic-pagination-link-topage-seperator').remove();
+                        
                 
-                        var $number = this.$list.find('.dynamic-pagination-link-topage[data-filter-letter="'+letter+'"]');
-                        $number.find('span').show()
-                        $number.find('a').hide()
-                    }
-                    
-                    
-                    // styling needs 'undefined' to be string
-                    // further processing needs the undefined object instead
-                    if (letter == 'undefined') {
-                        letter = undefined
-                    }
-                    
-                    this.$list.find('.dynamic-pagination a').off('.dynamic-pagination');
-                    this.$list.find('.dynamic-pagination a').on('click.dynamic-widget.dynamic-list.dynamic-pagination', this.get_clickOnPaginationLink_handler(this))
-                    
-                    // show as for current page
-                    this.$list.find('.dynamic-pagination-link-topage-seperator').remove();
-                    
-            
-                    if (number == 1 && numbers > number){
-                        this.pagination_showRight(number+1);
-                    }else if (number == numbers && numbers > 1){
-                        this.pagination_showLeft(number-1);
-                    }else if (numbers == 1){
-                        this.pagination_showNone();
-                    }else{
-                        this.pagination_showBoth(number+1, number-1);
+                        if (number == 1 && numbers > number){
+                            this.pagination_showRight(number+1);
+                        }else if (number == numbers && numbers > 1){
+                            this.pagination_showLeft(number-1);
+                        }else if (numbers == 1){
+                            this.pagination_showNone();
+                        }else{
+                            this.pagination_showBoth(number+1, number-1);
+                        }
                     }
                 },
         });
