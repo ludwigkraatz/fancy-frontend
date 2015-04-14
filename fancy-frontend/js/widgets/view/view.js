@@ -6,7 +6,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 attached: false,                                // tells whether the view is attached to an widget or standalone
                 limit:  1,                                      // how many active view are allowed
                 showEmpty: true,                                // whether to show or hide when no active views
-                initView: null
+                initView: null,
             },
             
             _create: function(){
@@ -29,15 +29,15 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 if (this.options.initView) {
                     this.element.trigger((this.options.initView.popup ? 'popup' : 'show'), [
-                                          this.options.initView.name,
-                                          this.options.initView.elements,
-                                          this.options.initView.setContent,
-                                          this.options.initView.reloadContent,
-                                          this.options.initView.cache
+                                          this.options.initView
                                           ])
                 }
                 
-                this.element.trigger('end-initializing');
+                if (!this.options.attached) {
+                    this.element.removeClass(config.frontend_generateClassName('state-initializing'));
+                }else{
+                    this.element.trigger('end-initializing');
+                }
             },
             
             isFull: function(){
@@ -60,11 +60,29 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
             },
             
+            hash_view: function(name, data){
+                var hash = name;
+                var keys = []
+                for (var key in data) {
+                    if(data.hasOwnProperty(key)){
+                        keys.push(String(key));
+                    }
+                }
+                for (var index in keys.sort()) {
+                    var key = keys[index];
+                    hash += ';' + key + ':' + String(data[key])
+                }
+                return hash
+            },
+            
             showViewHandler: function(  replace,                // whether or not to use a cashed view
                                         popup,                  // whther to show as popup
                                         event,
-                                        viewIdentifier,         // identifier that enables to cache this view
+                                        viewIdentifier_or_config,
+                                                                // config which contains the following settings or
+                                                                // identifier that enables to cache this view
                                                                 // might be a function to call dynamically
+                                        viewData,               // data thats is used by view widget
                                         showElements,           // elements to view
                                                                 // e.g. (this.$body, this.$header) or this.$body
                                         setContent,             // method that updates its own access, to the now cloned
@@ -73,17 +91,34 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         cache                   // boolean that tells whether to cache content or not
                                         ){
                 event.stopImmediatePropagation();
+
+                var viewIdentifier;
+                if (viewIdentifier_or_config && typeof viewIdentifier_or_config == 'object') {
+                    viewIdentifier = viewIdentifier_or_config.name;
+                    viewData = viewIdentifier_or_config.data;
+                    showElements = viewIdentifier_or_config.elements;
+                    setContent = viewIdentifier_or_config.setContent;
+                    reloadContent = viewIdentifier_or_config.reloadContent;
+                    cache = viewIdentifier_or_config.cache;
+                    paginationConfig = viewIdentifier_or_config.paginationConfig;
+                }else{
+                    viewIdentifier = viewIdentifier_or_config;
+                }
+
                 var currentViewIdentifier = typeof viewIdentifier == 'function' ? viewIdentifier() : viewIdentifier;
                 if (currentViewIdentifier == '') {
                     currentViewIdentifier = '.';
                 }
+                currentViewIdentifier = this.hash_view(currentViewIdentifier, viewData);
+                this.log('(fancy-frontend)', '(view)', '(show)', currentViewIdentifier)
+
                 var needsReload = true,
                     attach = true,
                     initializing = false;
                 
                 if (this.activeViews[currentViewIdentifier] !== undefined) {
                     this.log('(view)', 'cached', currentViewIdentifier, this.activeViews[currentViewIdentifier])
-                    return false// nothing to do
+                    return false  // nothing to do
                 }
                 if (!this.options.attached && this.element.hasClass(config.frontend_generateClassName('state-active-proxy'))) {
                     this.element.addClass(config.frontend_generateClassName('state-active-proxy'));
@@ -109,21 +144,23 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         this.element.trigger('remove', [view]);
                         view = undefined;
                     }else{
-                        view = undefined; // TODO: make normal caching work
+                        // view = undefined; // TODO: make normal caching work
                         //needsReload = false;
                     }
                 }
                 if (this.isFull()) {
                     this.element.trigger('clear', [1]);
                 }
+                if (typeof showElements == 'function'){
+                    showElements = showElements();
+                }
                 if (view === undefined ){
-                    if (typeof showElements == 'function'){
-                        showElements = showElements();
-                    }
                     view = {};
                     view['cache'] = cache;
                     view['origElements'] = showElements;
                     view['initialViewIdentifier'] = currentViewIdentifier;
+                    view['initialViewData'] = viewData;
+                    view['viewData'] = viewData;
                     view['viewIdentifier'] = viewIdentifier;
                     var clonedElements = view['elements'] = {};
                     for (element in showElements){
@@ -183,7 +220,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 if (typeof view === 'number') {
                     for (var _view=0; _view < view; _view++){
                         // TODO: allow protected views
-                        this.clearViewHandler(remove, event, this.activeViews[this.active[0]])// this.history.slice(-1 * this.options.limit)[0])
+                        this.clearViewHandler(remove, event, this.activeViews[this.active.pop()])// this.history.slice(-1 * this.options.limit)[0])
                     }
                     return false
                 }
@@ -195,6 +232,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }else{
                     viewIdentifier = initialViewIdentifier = view.viewIdentifier;
                 }
+                viewIdentifier = this.hash_view(viewIdentifier, view.viewData);
+                initialViewIdentifier = this.hash_view(initialViewIdentifier, view.initialViewData);
                 
                 this.active = this.active.splice(this.active.indexOf(initialViewIdentifier), 1);
                 delete this.activeViews[initialViewIdentifier];
