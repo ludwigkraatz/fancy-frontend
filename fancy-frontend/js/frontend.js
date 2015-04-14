@@ -537,6 +537,14 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             return ret;
         },
 
+        appendElement: function(element){
+            var $target = this.popUp_from_body ? $('body') : $($this.$root_element);
+            
+            this.__scope.apply(element, function(content){
+                $target.prepend(content)
+            })
+        },
+
         openPopup: function(popupKind, _callback, params){
             var $this = this;
             if (!params) {
@@ -560,11 +568,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfiguration', 'json'],
             params.widgetCore = this;// TODO: do this with this.add_widget()
             params.callback = callback
             this.create_plugin($popup, 'fancy-frontend.popup', params);
-            var $target = this.popUp_from_body ? $('body') : $($this.$root_element);
-            
-            this.__scope.apply($popup, function(content){
-                $target.prepend(content)
-            })
+            this.appendElement($popup);
             return;
             require(['fancyPlugin!widget:fancy-frontend:popup'], function($){
                 var $popup = $this.$root_targets.find(config.frontend_generateSelector('popup-window'));
