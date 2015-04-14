@@ -33,7 +33,7 @@ html {
 .#{$frontend-prefix}size-full {
     width: 100%;
     &:not(table) {
-        height: 100%;
+        min-height: 100%;
     }
 }
 
@@ -49,8 +49,12 @@ html {
     @include rowDesign;
 }
 
-.#{$frontend-prefix}shape-container {
+.#{$frontend-prefix}mixin-container {
     @include containerDesign;
+}
+
+.#{$frontend-prefix}shape-overlay {
+    @include overlayDesign;
 }
 
 .#{$frontend-prefix}shape-element {
@@ -231,6 +235,11 @@ table.#{$frontend-prefix}instance {
     @include actionMixin;
 }
 
+.#{$frontend-prefix}navigation .#{$frontend-prefix}action {
+    @include actionMixin;
+    display: inline;
+}
+
 .#{$frontend-prefix}instance.#{$frontend-prefix}state-initializing {
     &:after {
         @include iconMixin_loading;
@@ -241,25 +250,28 @@ table.#{$frontend-prefix}instance {
 .#{$frontend-prefix}action-close{
     @include iconMixin_close;
     @include actionMixin;
-    margin-right: 15px;
-    margin-top: 3px;
-    float: right;
+}
+
+.#{$frontend-prefix}action-viral{
+    @include iconMixin_viral;
+}
+
+.#{$frontend-prefix}action-nearby{
+    @include iconMixin_nearby;
+}
+
+.#{$frontend-prefix}action-profile{
+    @include iconMixin_home;
 }
 
 .#{$frontend-prefix}action-grid{
     @include iconMixin_grid;
     @include actionMixin;
-    margin-left: 15px;
-    margin-top: 3px;
-    float: left;
 }
 
 .#{$frontend-prefix}action-reload{
     @include iconMixin_reload;
     @include actionMixin;
-    margin-left: 15px;
-    margin-top: 3px;
-    float: left;
 }
 .#{$frontend-prefix}action-add{
     @include iconMixin_add;
@@ -272,23 +284,56 @@ table.#{$frontend-prefix}instance {
 .#{$frontend-prefix}action-check{
     @include iconMixin_check;
     @include actionMixin;
-    margin-left: 5px;
-    margin-top: 3px;
-    float: left;
 }
 .#{$frontend-prefix}action-highlight{
     @include iconMixin_highlight;
     @include actionMixin;
-    margin-left: 5px;
-    margin-top: 3px;
-    float: left;
+}
+.#{$frontend-prefix}action-settings{
+    @include iconMixin_settings;
+    /*@include actionMixin;*/
 }
 .#{$frontend-prefix}action-inspect{
     @include iconMixin_inspect;
     @include actionMixin;
-    margin-right: 15px;
-    margin-top: 3px;
-    float: right;
+}
+.#{$frontend-prefix}header {
+    >.#{$frontend-prefix}action-settings{
+        margin-left: -5px;
+        margin-right: 5px;
+        margin-top: 3px;
+        float: right;
+    }
+    >.#{$frontend-prefix}action-inspect{
+        margin-right: 15px;
+        margin-top: 3px;
+        float: right;
+    }
+    >.#{$frontend-prefix}action-check{
+        margin-left: 5px;
+        margin-top: 3px;
+        float: left;
+    }
+    >.#{$frontend-prefix}action-highlight{
+        margin-left: 5px;
+        margin-top: 3px;
+        float: left;
+    }
+    >.#{$frontend-prefix}action-reload{
+        margin-left: 15px;
+        margin-top: 3px;
+        float: left;
+    }
+    >.#{$frontend-prefix}action-grid{
+        margin-left: 15px;
+        margin-top: 3px;
+        float: left;
+    }
+    >.#{$frontend-prefix}action-close{
+        margin-right: 15px;
+        margin-top: 3px;
+        float: right;
+    }
 }
 
 

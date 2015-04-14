@@ -17,6 +17,8 @@ $color-font-default: #000;
 $color-font-weak: #000;
 $color-font-weak: #CCC;
 
+$color-overlay: rgba(100, 100, 100, .2);
+
 $zoom: 1;
 
 $widget-small-width: 250px;
@@ -33,10 +35,9 @@ $font-size: 12px;
 $img-root: $image-root+'fancy-frontend/img/';
 $img-loading-40x40: url($img-root+'loading.gif');
 
-$state: null;
+$shape: null;
 /*
  * core
- * |-container
  * |-content == body
  * |--> body.*** = Page 
  * |--> tr.*** = row
@@ -44,6 +45,11 @@ $state: null;
  * |-element
  * |-icon
  * |-popup
+ * |-overlay
+ */
+$mixin: null;
+/*
+ * container
  */
 $size: null;
 /*
@@ -158,7 +164,7 @@ $zoom: null;
     text-align: center;
     padding: 0px;
 
-    h3{
+    > h3{
         font-size: 0.8em;
         margin: 0 auto 0 auto;
         padding: 0px 5px 0 5px;
@@ -224,6 +230,16 @@ $zoom: null;
     background-image: url($img-root+'icons/x1.svg')
 }
 
+@mixin iconMixin_viral{
+    @include iconMixin;
+    background-image: url($img-root+'icons/viral.svg')
+}
+
+@mixin iconMixin_nearby{
+    @include iconMixin;
+    background-image: url($img-root+'icons/facebook30.svg')
+}
+
 @mixin iconMixin_grid{
     @include iconMixin;
     background-image: url($img-root+'icons/slideshows.svg')
@@ -282,6 +298,21 @@ $zoom: null;
     background-position: -3px -3px;
 }
 
+@mixin iconMixin_settings{
+    @include iconMixin;
+    background-image: url($img-root+'icons/settings21.svg');
+}
+
+@mixin iconMixin_pen{
+    @include iconMixin;
+    background-image: url($img-root+'icons/pen29.svg');
+}
+
+@mixin iconMixin_home{
+    @include iconMixin;
+    background-image: url($img-root+'icons/house158.svg');
+}
+
 
 // interaction mixins
 
@@ -299,6 +330,9 @@ $zoom: null;
 
 @mixin actionMixin {
     @include clickableMixin;
+    &.#{$frontend-prefix}state-active {
+        cursor: default;
+    }
 }
 
 @mixin actionsMixin {
@@ -386,7 +420,7 @@ $zoom: null;
 
 
 @mixin hasHeader {
-    > .#{$frontend-prefix}header {
+    >.#{$frontend-prefix}header {
         @extend %headerDesign;
         display: block;
     }
@@ -401,7 +435,7 @@ $zoom: null;
 @mixin hasActionHeader {
     @include hasHeader;
     > .#{$frontend-prefix}header {
-        display: none;
+        /*display: none;*/
     }
 }
 
@@ -421,7 +455,7 @@ $zoom: null;
 
 @mixin shapeMixin{
     @extend %border-box;
-    @extend %overflow-hidden;
+    /*@extend %overflow-hidden;*/
 }
 
 //@mixin sizeMixin{
@@ -437,10 +471,38 @@ $zoom: null;
 }
 
 @mixin containerDesign {
-    @include shapeMixin;
-    @include hasHeader;
+    /*@include shapeMixin;
+    @include hasHeader;*/
     //height: 100%;  // for better table support
     width: 100%;
+}
+
+@mixin overlayDesign {
+    
+    > .#{$frontend-prefix}header, > .#{$frontend-prefix}body, > .#{$frontend-prefix}footer {
+        display: none;
+    }
+    &.#{$frontend-prefix}state-active.#{$frontend-prefix}size-small > .#{$frontend-prefix}body,
+    &.#{$frontend-prefix}state-active.#{$frontend-prefix}size-small > .#{$frontend-prefix}footer{
+        display: block;
+        position: absolute;
+        z-index: $zindex-overlay;
+        margin: 0 0 0 -250px;
+        padding: 5px;
+        width: 250px;
+        background-color: $color-overlay;
+        
+        > ul, ol {
+            list-style: none;
+            float: left;
+            margin: 0;
+            padding: 0;
+            > li {
+                text-align: left
+            }
+        }
+    }
+    
 }
 
 @mixin flexContainerDesign {
@@ -458,6 +520,77 @@ $zoom: null;
     @include shapeMixin;
     .#{$frontend-prefix}header .#{$frontend-prefix}title {
         display: none;
+    }
+}
+
+@mixin TopNavigationDesign {
+    > .#{$frontend-prefix}header > .#{$frontend-prefix}navigation {
+        list-style: none;
+        border-bottom: 0.1em solid black;
+        margin: 0em;
+        padding: 0 0 0.5em;
+        
+        &:before {
+            content: "[";
+        }
+        &:after {
+            content: "]";
+        }
+        
+        > li {
+            display: inline;
+    
+            &:before {
+                content: "|";
+                padding-right: 0.3em;
+            }
+            &:nth-child(1):before {
+                content: "";
+                padding: 0;
+            }
+        }
+    }
+}
+
+@mixin BottomIconNavigationDesign {
+    @include TopNavigationDesign;
+    
+    > .#{$frontend-prefix}header {
+        display: none;
+    }
+    
+    > .#{$frontend-prefix}header > .#{$frontend-prefix}navigation {
+        position: fixed;
+        bottom: 0px;
+        left: 0px;
+        width: 100%;
+        border-bottom: 0;
+        background-color: white;
+        z-index: 100;
+        &:before {
+            display: none;
+        }
+        &:after {
+            display: none;
+        }
+        > li {
+            margin: 10px;
+            &:before {
+                display: none;
+            }
+            .#{$frontend-prefix}action {
+                display: inline-block;
+                background-size: 20px 20px;
+                height: 20px;
+                width: 20px;
+                margin-bottom: -5px;
+                margin-top: 5px;
+            }
+            
+            .#{$frontend-prefix}title {
+                display: none;
+            }
+        }
     }
 }
 
@@ -483,7 +616,7 @@ $zoom: null;
 @mixin centeredPageDesign {
     @include shapeMixin;
     @include hasActionHeader;
-    height: 100%;
+    min-height: 100%;
     width: $page-width;
     margin: 0 auto;
 }
