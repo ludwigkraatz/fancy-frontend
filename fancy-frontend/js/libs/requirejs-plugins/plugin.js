@@ -333,7 +333,7 @@ define(function(base){
 
       return {
         reqPath: this.path(path, config, 'partials'),
-        plugin: 'text'
+        reqPlugin: this.load_plugin(config, '../text').reqPath
       }
     },
 
