@@ -647,9 +647,11 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             
                         
                         if (elem == 'header') {
-                            if (this.$header) {
+                            if (this.element.filter(header_tag + '.' + headerClass).size()){
+                                this.$header = this.element.filter(header_tag + '.' + headerClass);
+                            }else if (this.$header) {
                                 this.$header.addClass(headerClass);
-                            }else{
+                            }else {
                                 this.$header = $('<'+header_tag+' class="' + headerClass + '"></'+header_tag+'>');
                                 this.element.prepend(this.$header);
                             }
@@ -657,7 +659,10 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         }else if (elem == 'body') {
                             var _body = '<'+body_tag+' class="' + bodyClass + '"></'+body_tag+'>';
                             //if (this.element.children('.' + bodyClass).size() == 0) {
-                            if (this.$body) {
+                            
+                            if (this.element.filter(body_tag + '.' + bodyClass).size()){
+                                this.$body = this.element.filter(body_tag + '.' + bodyClass);
+                            }else if (this.$body) {
                                 this.$body.addClass(bodyClass);
                             }else{
                                 this.$body = $(_body);
@@ -676,25 +681,32 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             if (this.element.filter('.' + this._widgetConfig.name_shape_row).size()){
                                 var first = true;
                                 
-                                this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).each(function() {
-                                    if (first) {
-                                        first = false;
-                                    }else{
-                                        var $body = $(_body);
-                                        $this.$body.after($body);
-                                        $this.$body = $this.$body.add($body);
-                                    }
-                                });
+                                if (this.$body.size() != this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).size()){
+                                    this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).each(function() {
+                                        if (first) {
+                                            first = false;
+                                        }else{
+                                            var $body = $(_body);
+                                            $this.$body.after($body);
+                                            $this.$body = $this.$body.add($body);
+                                        }
+                                    });
+                                };
                             };
+                            this.initBody();
                         }else if (elem == 'footer') {
                             //if (this.element.children('.' + footerClass).size() == 0) {
-                                if (this.$footer) {
+                                
+                            if (this.element.filter(footer_tag + '.' + footerClass).size()){
+                                this.$footer = this.element.filter(footer_tag + '.' + footerClass);
+                            }else if (this.$footer) {
                                     this.$footer.addClass(footerClass);
                                 }else{
                                     this.$footer = $('<'+footer_tag+' class="' + footerClass + '"></'+footer_tag+'>');
                                     this.element.append(this.$footer);
                                 };
                             //};
+                            this.initFooter();
                         }
                         ret[elem] = this['$'+elem];
                         
@@ -724,9 +736,15 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }
                 },
 
+                initBody: function(){
+                },
+
+                initFooter: function(){
+                },
+
                 initHeader: function(){
                     if (this.$header.find(':header').length == 0) {
-                        this.$header.html('<h3  class="'+this._widgetConfig.name_classes_title+'">'+this.__proto__.widgetFullName+'</h3>');
+                        this.$header.prepend('<h3  class="'+this._widgetConfig.name_classes_title+'">'+this.__proto__.widgetFullName+'</h3>');
                     }
                     this.$headline = this.$header.children(':header');
                     
@@ -794,12 +812,15 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     
                     if ($header) {
                         this.apply($header, function(content){$this.$header.html(content)})
+                        this.initWidgetStructure(['header'], false);
                     }
                     if ($body) {
                         this.apply($body, function(content){$this.$body.html(content)})
+                        this.initWidgetStructure(['body'], false);
                     }
                     if ($footer) {
                         this.apply($footer, function(content){$this.$footer.html(content)})
+                        this.initWidgetStructure(['footer'], false);
                     }
                     
                     // apply changed content, because other framework might process the template
