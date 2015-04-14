@@ -158,10 +158,8 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     resource: mixins.ResourceMixin,
                 },
                 views: {
-                    list: views.ListView,
-                    create: views.CreateView,
-                    edit: views.EditView,
-                    detail: views.DetailView
+                    template: views.TemplateView,
+                    widget: views.WidgetView
                 },
                 _locales: null,
                 _libs: null,
