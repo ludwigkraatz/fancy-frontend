@@ -333,7 +333,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     })
                     
                     this.element.on('close', function(event){
-                        event.stopPropagation();
+                        // dont stop propagation. parent widgets might want to know that this one closes
                         $this.destroy();
                     });
                 },
@@ -757,7 +757,6 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             }
                         )
                     }
-                    
                 },
 
                 updateContent: function(data){/*
