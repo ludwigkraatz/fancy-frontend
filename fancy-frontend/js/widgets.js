@@ -271,18 +271,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     this._fixtures.push(name);
                 },
 
-                _create: function() {
-                    /*if (! this.element.hasClass('dynamic-widget')) {
-                        throw new Error('the target for "fancy_frontend.dynamicet_widget" widget needs to have a "dynamic-widget" class');
-                    }
-                    
-                    if (this.options.load_content  && this.options.widget_url == undefined) {
-                        throw new Error('"fancy_frontend.dynamicet_widget" needs to be initialized with an "widget_url" attribute');
-                    }
-                    
-                    if (this.element.css('position') == 'static'){
-                        this.element.css('position', "relative")
-                    }*/
+                initWidget: function(){
                     var $this = this;
                     
                     this.element.attr('_uuid', this.uuid)
@@ -296,6 +285,10 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     
                     if (this.options.scope) {
                         this.options.scope.init(this);
+                    }
+                    this.translate = function(identifier, callback){
+                        var $this = this;
+                        this.options.scope.translate(identifier, callback);
                     }
                     
 
@@ -343,6 +336,22 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         event.stopPropagation();
                         $this.destroy();
                     });
+                },
+
+                _create: function() {
+                    var $this = this;
+                    /*if (! this.element.hasClass('dynamic-widget')) {
+                        throw new Error('the target for "fancy_frontend.dynamicet_widget" widget needs to have a "dynamic-widget" class');
+                    }
+                    
+                    if (this.options.load_content  && this.options.widget_url == undefined) {
+                        throw new Error('"fancy_frontend.dynamicet_widget" needs to be initialized with an "widget_url" attribute');
+                    }
+                    
+                    if (this.element.css('position') == 'static'){
+                        this.element.css('position', "relative")
+                    }*/
+                    this.initWidget();
                     
                     
                     // start loading
@@ -582,6 +591,9 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         }
                         if ([this._widgetConfig.name_shape_widget, this._widgetConfig.name_mixin_container, this._widgetConfig.name_shape_page, this._widgetConfig.name_shape_popup].indexOf(this.options.shape) != -1) {
                             this.use_mixin('loading');
+                        }
+                        if (this.options.shape != this._widgetConfig.name_shape_icon && this.element.hasClass(this._widgetConfig.name_shape_icon)) {
+                            this.element.removeClass(this._widgetConfig.name_shape_icon);
                         }
                     }
                     this.element.addClass(this.options.shape)
