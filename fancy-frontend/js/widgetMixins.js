@@ -13,7 +13,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     }
                     //this.addView = ViewMixin.addView.bind(this);
                     
-                    mixinConfig.elements = mixinConfig.elements || ['body'];
+                    mixinConfig.elements = mixinConfig.data.elements || ['body'];
                     ViewMixin.setupLazyView.call($this, mixinConfig); 
                     this.setupMixinHandlers(ViewMixin.event_prefix, this.views);                    
                     
@@ -54,6 +54,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         
                         $view.trigger('popup', [
                                                name, //$this.generateStateIdentifier.bind($this),
+                                               data,
                                                $this.initWidgetStructure.bind($this, mixinConfig.elements),
                                                function(newElements){
                                                     
@@ -82,6 +83,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         
                         $view.trigger('show', [
                                                mixinConfig._activeView_package[0], //$this.generateStateIdentifier.bind($this),
+                                               mixinConfig._activeView_package[1],
                                                $this.initWidgetStructure.bind($this, mixinConfig.elements),
                                                function(newElements){
                                                     
@@ -105,6 +107,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                                         attached: true,
                                         initView: {
                                             name: mixinConfig._activeView_package ? mixinConfig._activeView_package[0] : null, //this.generateStateIdentifier.bind(this),
+                                            data: mixinConfig._activeView_package ? mixinConfig._activeView_package[1] : null,
                                             elements: elements,
                                             setContent: function(newElements){
                                                 
@@ -140,17 +143,17 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     this.element.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
                         $this.options.scope.log.debug('show view:', name, data);
-                        if (mixinConfig.hasOwnProperty('_activeView_package') && mixinConfig._activeView_package) {
+                        //if (mixinConfig.hasOwnProperty('_activeView_package') && mixinConfig._activeView_package) {
                             ViewMixin.runViewWidget.call($this, mixinConfig,
                                                 $this.initWidgetStructure.bind($this, mixinConfig.elements, false),
                                                 function(){ 
                                                    $this.trigger(ViewMixin.event_prefix + '-show', [name, data]);
                                                 }
                                               );
-                        }else{
-                            mixinConfig._activeView_package = [name, data];
-                            $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
-                        }
+                        //}else{
+                        //    mixinConfig._activeView_package = [name, data];
+                        //    $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
+                        //}
                     });
                 },
                 
@@ -226,7 +229,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                 this.element.draggable({
                     //snap: true,
                     //grid: [ this.element.outerWidth()+20, 1 ],
-                    containment: this.element.closest('.' + this._widgetConfig.name_shape_container),//$this._widgetConfig._config.frontend_generateID('dashboard'),
+                    containment: this.element.closest('.' + this._widgetConfig.name_mixin_container),//$this._widgetConfig._config.frontend_generateID('dashboard'),
                     scroll: false,
                     handle: '>'+this._widgetConfig.selector_elements_header,//this.element.children(this._widgetConfig.selector_elements_header),//$this._widgetConfig.selector_elements_header,
                     //connectToSortable: "#dashboard .column",
@@ -277,6 +280,20 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             }
         }
         mixins.ApiMixin = ApiMixin;
+        
+        var SettingsMixin = {
+            init: function(mixinConfig){
+                this.on('init-widget-structure-done.header', function(event){
+                    var $settingsBtn = this.newElement({
+                        plugin_identifier: 'fancy-frontend.settings?',
+                        view: '',
+                        icon: 'settings',
+                        target: this.$header
+                    });
+                })
+            },
+        }
+        mixins.SettingsMixin = SettingsMixin;
 
         var _AttrMixin = {
             init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships){
@@ -293,7 +310,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                 for (var index in accessables) {
                     var _name = accessables[index];
                     this.options[_name] = this.options.scope['_' + _name];
-                    this.log('option', _name, this.options.scope['_' + _name]);
+                    this.log('(fancy-frontend)', '(widgetMixins)', '(AttrMixin)', 'option', _name, this.options.scope['_' + _name]);
                     this.options.scope['_' + _name].bind('replaced', _AttrMixin.replacedHandler.bind(this, mixinConfig, _name));
                 }
                 if ($this.options.scope['__'+name+'Reference']) {
@@ -327,7 +344,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             
             replacedHandler: function(mixinConfig, name, event, obj){
                 var $this = this;
-                $this.log('updating option "'+name+'" with', obj)
+                $this.log('(fancy-frontend)', '(widgetMixins)', '(AttrMixin)', 'updating option "'+name+'" with', obj)
                 
                 var newObj = obj;//obj.isBlank() ? null : obj;
                 if (newObj !== $this.options[name]) {
