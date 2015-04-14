@@ -857,6 +857,58 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         });
                     }
                     
+                },
+                
+                newElement: function(configuration){
+                    if (configuration.target) {
+                        if (configuration.method == 'patch') {
+                             configuration.apply_patch = configuration.target;
+                        }else{
+                            configuration.apply_to = configuration.target;
+                        }
+                        // TODO:depreciation warning
+                    }
+                    
+                    var class_name = '';
+                    if (configuration.css_class) {
+                        css_class = configuration.css_class;
+                        if (typeof css_class == 'string') {
+                            css_class = [css_class]
+                        }
+                        for (var index in css_class) {
+                            class_name += config.frontend_generateClassName(css_class[index]) + ' '
+                        }
+                    }
+                    
+                    var tag = configuration.tag || 'div',
+                        div;
+                    
+                    if (configuration.apply_patch) {
+                        div = configuration.apply_patch;
+                    }else{
+                        div = $('<'+ tag +' class="' + class_name + '">' + (configuration.content || '') + '</'+ tag +'>');
+                    }
+                    if (configuration.icon) {
+                        div.attr('action-icon', configuration.icon)
+                    }
+                    if (configuration.view) {
+                        div.attr('view-container', configuration.view)
+                    }
+                    if (configuration.plugin_identifier) {
+                        this.options.widgetCore.create_plugin(div, configuration.plugin_identifier, configuration.plugin_options);
+                    }else if (configuration.widget_identifier) {
+                        this.options.widgetCore.create_widget(div, configuration.widget_identifier, configuration.widget_options);
+                    }
+                    if (configuration.apply_to || configuration.apply_patch) {
+                        this.apply(div, configuration.apply_to ? function(content){
+                            if (configuration.apply_to  instanceof Function) {
+                                configuration.apply_to(content.contents())
+                            }else{
+                                configuration.apply_to.append(content)
+                            }
+                        } : undefined);
+                    }
+                    return div
                 }
         });
     
