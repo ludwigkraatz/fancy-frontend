@@ -84,9 +84,11 @@ define(['fancyPlugin!jquery'], function($){
                                 headerClass = $this._widgetConfig.name_classes_header;
 
                             $this.$body.each(function(index, elem) {
-                                header = $this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).get(index);
-                                $this.log('getting header', $(header).attr(config.frontend_generateAttributeName('name')))
-                                $(elem).html($this.options.scope.resource[$(header).attr(config.frontend_generateAttributeName('name'))])
+                                var header = $this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).get(index),
+                                    header_name = $(header).attr(config.frontend_generateAttributeName('name')),
+                                    value = $this.options.scope.resource[header_name];
+
+                                $(elem).html(value)
                             });
                             
                             
@@ -118,7 +120,7 @@ define(['fancyPlugin!jquery'], function($){
                 }
                 $this.options.resource.bind('replaced', function(event, resource){
                     if ($this.options.resource !== resource) {
-                        DetailView.init(mixinConfig);// todo: unbind?
+                        views.DetailView.init.call($this, mixinConfig);// todo: unbind?
                     }
                 })
                 
@@ -166,6 +168,16 @@ define(['fancyPlugin!jquery'], function($){
                 this.loadDependencies({
                     templates: [template + '.' + mixinConfig.name]
                 })
+            }
+        },
+        
+        WidgetView: {
+            init: function(mixinConfig){
+                var $this = this;
+                var $body = this.$body;
+                var config = $.extend({target: this.$body}, mixinConfig.data || {});
+                this.log('(fancy-frontend)', '(widgetViews)', '(WidgetView)', 'creating', config)
+                this.newElement(config);
             }
         }
     }
