@@ -273,8 +273,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         var DraggableMixin = {
             init: function(mixinConfig){
                 var $this = this;
-                this.element.css('position', 'absolute');
-                this.element.css('top', this.element.parent().position().top + 15);
+                //this.element.css('position', 'absolute');
+                //this.element.css('top', this.element.parent().position().top + 15);
                 this.element.draggable({
                     //snap: true,
                     //grid: [ this.element.outerWidth()+20, 1 ],
