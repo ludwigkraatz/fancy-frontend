@@ -55,8 +55,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     this.$container = $this.$list.find(this._widgetConfig.selector_shape_container);
                     this.$list.off('.dynamic-list', this.get_reload_handler(this));
                     this.$list.addClass(this._widgetConfig.name_classes_list);
-                    this.$list.addClass(this._widgetConfig.name_shape_container);
-                    this.$list.addClass(this._widgetConfig.name_size_full);
+                    //this.$list.addClass(this._widgetConfig.name_mixin_container);
+                    
                     this.$list.addClass(config.frontend_generateClassName('instance'));
                     
                     this.$list.on('dynamic-reload-list.dynamic-list.dynamic-widget', this.get_reload_handler(this));
@@ -133,7 +133,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                 $this.buildHeader();
                                 $this.buildContainer();
                                 $this.buildFooter();
-                                var $body = $this.$body = $this.element.find($this._widgetConfig.selector_shape_container);
+                                var $body = $this.$body = $this.element.find($this._widgetConfig.selector_mixin_container);
                                 if (content['Accept-Ranges'] !== undefined) {
                                     // config as discovered
                                     if (content) {
@@ -220,9 +220,9 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 buildContainer: function(){
                     var tag = this.asTable ? 'tbody' : 'div';
-                    this.$container = this.$list.children(this._widgetConfig.selector_shape_container);
+                    this.$container = this.$list.children(this._widgetConfig.selector_mixin_container);
                     if (this.$container.size() <= 0) {
-                        this.$container = $('<'+tag+' class="'+ this._widgetConfig.name_classes_body +' '+ this._widgetConfig.name_shape_container +'"></'+tag+'>');
+                        this.$container = $('<'+tag+' class="'+ this._widgetConfig.name_classes_body +' '+ this._widgetConfig.name_mixin_container +'"></'+tag+'>');
                         this.$container.insertAfter(this.$header);
                     }
                 },

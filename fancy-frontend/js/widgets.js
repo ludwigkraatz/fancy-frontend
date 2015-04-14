@@ -88,11 +88,14 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
             widgetConfig.name_shape_row = config.frontend_generateClassName('shape-row');
             widgetConfig.name_shape_widget = config.frontend_generateClassName('shape-widget');
             widgetConfig.name_shape_popup = config.frontend_generateClassName('shape-popup');
-            widgetConfig.name_shape_container = config.frontend_generateClassName('shape-container');
+            widgetConfig.name_mixin_container = config.frontend_generateClassName('mixin-container');
+            widgetConfig.name_shape_overlay = config.frontend_generateClassName('shape-overlay');
+            widgetConfig.name_shape_icon = config.frontend_generateClassName('shape-icon');
             widgetConfig.name_size_sizeless = config.frontend_generateClassName('size-sizeless');
             widgetConfig.name_shape_shapeless = config.frontend_generateClassName('shape-shapeless');
             widgetConfig.name_size_small = config.frontend_generateClassName('size-small');
             widgetConfig.name_size_full = config.frontend_generateClassName('size-full');
+            widgetConfig.name_state_active = config.frontend_generateClassName('state-active');
 
             /* -->widgets */
             widgetConfig.name_classes_widgets_core = config.frontend_generateClassName(config.widgets.defaults.core.css);
@@ -111,7 +114,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
             widgetConfig.selector_widgets_popup = '.' + widgetConfig.name_classes_widgets_popup;
 
             /* ->elements */
-            widgetConfig.selector_shape_container = '.' + widgetConfig.name_shape_container;
+            widgetConfig.selector_mixin_container = '.' + widgetConfig.name_mixin_container;
             widgetConfig.selector_elements_sortable = '.' + widgetConfig.name_classes_sortable;
             widgetConfig.selector_shape_element = '.' + widgetConfig.name_shape_element;
             widgetConfig.selector_elements_widget = '.' + widgetConfig.name_classes_widget;
@@ -186,7 +189,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }else
                     if (this.options.widgetCore) {
                         this.options.widgetCore.error.apply(this, arguments)
-                    }else{
+                    }else {
                         console.error.apply(console, arguments);
                     }
                 },
@@ -560,13 +563,13 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         if (this.element.filter('body').size()) {
                             this.options.shape = this._widgetConfig.name_shape_page;
                         }else
-                        if (this.element.parent('tbody' + this._widgetConfig.selector_shape_container).size()) {
+                        if (this.element.parent('tbody' + this._widgetConfig.selector_mixin_container).size()) {
                             this.options.shape = this._widgetConfig.name_shape_row;
                         }else
                         if (this.element.parents('.' + this._widgetConfig.name_shape_widget).size()) {
                             this.options.shape = this._widgetConfig.name_shape_content;
                         }else
-                        if (this.element.parents(this._widgetConfig.selector_shape_container).size()) {
+                        if (this.element.parents(this._widgetConfig.selector_mixin_container).size()) {
                             this.options.shape = this._widgetConfig.name_shape_widget;
                         }else{
                             this.options.shape = this._widgetConfig.name_shape_content;
@@ -579,7 +582,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             this.use_mixin('draggable');
                             //  attach to container
                         }
-                        if ([this._widgetConfig.name_shape_widget, this._widgetConfig.name_shape_container, this._widgetConfig.name_shape_page, this._widgetConfig.name_shape_popup].indexOf(this.options.shape) != -1) {
+                        if ([this._widgetConfig.name_shape_widget, this._widgetConfig.name_mixin_container, this._widgetConfig.name_shape_page, this._widgetConfig.name_shape_popup].indexOf(this.options.shape) != -1) {
                             this.use_mixin('loading');
                         }
                     }
@@ -594,7 +597,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         if (this.element.filter('tr.' + this._widgetConfig.name_shape_content).size()) {
                             this.options.size = this._widgetConfig.name_size_full;
                         }else
-                        if (this.element.parents(this._widgetConfig.selector_shape_container).size()) {
+                        if (this.element.parents(this._widgetConfig.selector_mixin_container).size()) {
                             this.options.size = this._widgetConfig.name_size_small;
                         }else{
                             this.options.size = this._widgetConfig.name_size_full;
@@ -607,6 +610,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 },
                 
                 initWidgetStructure: function(elements, clear){
+                    this.log('(fancy-frontend)', '(widgetsCore)', 'initWidgetStructure')
                     clear = clear === undefined ? true : clear;
                     this.setShape();
                     var $this = this,
@@ -628,7 +632,6 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     if (clear) {
                         this.clear(elements);
                     }
-                    
                     for (var _element in elements) {
                         var elem = elements[_element];
                             
