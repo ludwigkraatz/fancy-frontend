@@ -103,7 +103,7 @@ define(function(base){
         if (config.versions[module] !== undefined) {
             version = config.versions[module][path];
         }else{
-            version = 0;
+            version = 0; // null; TODO: when version is null, dont use versioned resource
         }
         
         return version

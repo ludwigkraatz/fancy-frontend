@@ -710,6 +710,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         }
                         ret[elem] = this['$'+elem];
                         
+                        this.trigger('init-widget-structure-done.' + elem)
                     }
                     //this.apply(this.element);
                     return ret;
