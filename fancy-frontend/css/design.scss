@@ -1,6 +1,18 @@
 @import 'consts';
 @import "toolkit";
 
+$zindex-overlay: 1;
+
+$viewport-smartphone-min : 0;
+$viewport-smartphone-max : 765px;
+$viewport-tablet-min     : 766px;
+$viewport-tablet-max     : 1020px;
+$viewport-desktop-min    : 1021px;
+$viewport-desktop-max    : 1276px;
+$viewport-widescreen-min : 1277px;
+$viewport-widescreen-max : 1499px;
+$viewport-limit          : 1500px;
+
 
 $color-area-1: #FFF;
 $color-area-1-alpha: 1;

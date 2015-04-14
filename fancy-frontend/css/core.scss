@@ -39,6 +39,13 @@ html {
 
 .#{$frontend-prefix}shape-page {
     @include centeredPageDesign;
+    @media screen and (max-width: $viewport-smartphone-max) {
+        @include BottomIconNavigationDesign;
+    }
+    @media screen and (min-width: $viewport-tablet-min) {
+        @include TopNavigationDesign;
+    }
+    
 }
 
 .#{$frontend-prefix}shape-content {
