@@ -7,6 +7,7 @@ define(['fancyPlugin!jquery'], function($){
             },
             init: function(mixinConfig){
                 var _data = mixinConfig.data ? (mixinConfig.data.source || mixinConfig.data.relationship) : undefined,
+                    configuration = mixinConfig.data,
                     $this = this,
                     $body = this.$body,
                     reference = undefined,
@@ -14,6 +15,7 @@ define(['fancyPlugin!jquery'], function($){
                     source = null,
                     _relationship,
                     create_as = 'plugin',
+                    cache = true,
                     listConfig = (mixinConfig.data ? (mixinConfig.data.listConfig) : null) || {};
 
                 if (!!_data && _data.constructor == Array) {
@@ -37,12 +39,18 @@ define(['fancyPlugin!jquery'], function($){
                         this.log('(error)', 'missing resource', e)
                         throw e
                     }
+                    this.log('(fancy-frontend)', '(view)', '(list)', 'resourcelist from somewhere by relationship', resourceList, _relationship)
                     resourceList = resourceList ? resourceList : this.options.scope.__resourceRelationships[_relationship];
+                }else if ($this.options.resource && $this.options.resource.getContent('json').constructor === Array){
+                    source = $this.options.resource.getContent('json');
+                    cache = false;
+                    this.log('(fancy-frontend)', '(view)', '(list)', 'source from resource', $this.options.resource, source)
                 }else if ($this.options.resourceList){/*
                     $this.options.scope.log.debug('setting up list view event proxy');
                     $this.element.on('resourcelist-updated', function(event, resourceList){
                         $this.options.scope.log.debug('redirecting update to list view');
                     });*/
+                    this.log('(fancy-frontend)', '(view)', '(list)', 'resourcelist from options', $this.options.resourceList)
                     resourceList = $this.options.resourceList;
                 }else{
                     var e = Error('missing list source');
@@ -53,9 +61,11 @@ define(['fancyPlugin!jquery'], function($){
                 $.extend(_listConfig, {
                     resourceList: resourceList,
                     source: source,
+                    asTable: configuration && configuration.asTable !== undefined ? configuration.asTable : undefined,
                     entryWidget: this.options.scope.__widgetNamespace + '.' + this.options.scope.__widgetName,
                     entryTemplate: this.options.content ? this.options.content : null,
                     allowedRelationships: this.options.resourceRelationshipsAllowed,
+                    cache_entries: cache,
                 }, listConfig);
 
                 $this.options.widgetCore['create_' + create_as](
@@ -79,7 +89,7 @@ define(['fancyPlugin!jquery'], function($){
                 if (this.options.resource && !this.options.resource.isBlank()) {this.log('found ', this.options.resource)
                     this.options.resource.load(function (result){
                         if ($this.element.filter('.' + $this._widgetConfig.name_shape_row).size()){
-                            $this.log('as table entry')
+                            $this.log('(fancy-frontend)', '(view)', '(detail)', 'as table entry')
                             var bodyClass = $this._widgetConfig.name_classes_body,
                                 headerClass = $this._widgetConfig.name_classes_header;
 
@@ -87,7 +97,10 @@ define(['fancyPlugin!jquery'], function($){
                                 var header = $this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).get(index),
                                     header_name = $(header).attr(config.frontend_generateAttributeName('name')),
                                     value = $this.options.scope.resource[header_name];
-
+                                if (!header_name) {
+                                    return
+                                }
+                                //$this.log('(fancy-frontend)', '(view)', '(detail)', 'entry', header_name, value)
                                 $(elem).html(value)
                             });
                             
@@ -105,7 +118,7 @@ define(['fancyPlugin!jquery'], function($){
                                 //event.stopImmediatePropagation();
                                 return false
                             })
-                            $this.$footer.html($focus)
+                            $this.$footer.append($focus)
                         }else{
                             if (!$this.$body.html()) {
                                 $this.log('plain')
@@ -159,14 +172,14 @@ define(['fancyPlugin!jquery'], function($){
             init: function(mixinConfig){
                 var $this = this;
                 var $body = this.$body;
-                template = this.get_active_template();
+                template = mixinConfig.data.template || (this.get_active_template()  + '.' + mixinConfig.name);
                 
                 if (!template) {
                     this.log('(error)', 'invalid template');
                     return
                 }
                 this.loadDependencies({
-                    templates: [template + '.' + mixinConfig.name]
+                    templates: [template]
                 })
             }
         },

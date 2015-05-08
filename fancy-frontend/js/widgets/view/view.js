@@ -29,6 +29,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 this.element.on('page', this.updateViewHandler.bind(this));
                 
                 if (this.options.initView) {
+                    this.log('(fancy-frontend)', '(widget)', '(view)', 'init view', this.options.initView)
                     this.element.trigger((this.options.initView.popup ? 'popup' : 'show'), [
                                           this.options.initView
                                           ])
@@ -126,7 +127,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }
                 for (var index in keys.sort()) {
                     var key = keys[index];
-                    hash += ';' + key + ':' + String(data[key])
+                    hash += ';' + key + ':' + JSON.stringify(data[key])
                 }
                 return hash
             },
@@ -184,10 +185,10 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     currentViewIdentifier = '.';
                 }
                 currentViewIdentifier = this.hash_view(currentViewIdentifier, viewData);
-                this.log('(fancy-frontend)', '(view)', '(show)', currentViewIdentifier)
+                this.log('(event)', '(fancy-frontend)', '(view)', '(show)', event, viewIdentifier_or_config)
 
                 var needsReload = true,
-                    attach = true,
+                    attach = false,  // TODO: when true?
                     initializing = false;
                 
                 if (this.activeViews[currentViewIdentifier] !== undefined) {
@@ -230,6 +231,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }
                 if (view === undefined ){
                     view = {};
+                    this.log('(view)', 'creating new view obj', currentViewIdentifier, view)
                     view['cache'] = cache;
                     view['origElements'] = showElements;
                     view['initialViewIdentifier'] = currentViewIdentifier;
@@ -296,7 +298,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 if (initializing) {
                     this.element.trigger('end-initializing');
                 }
-                this.log('(view)', 'showed', currentViewIdentifier);
+                this.log('(view)', 'showed', currentViewIdentifier, view);
                 return false;
             },
             
@@ -334,8 +336,9 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 delete this.activeViews[initialViewIdentifier];
                 this.log('(view)', 'deleted', initialViewIdentifier);
                 if (view.cache && !remove ) {
-                    // create a new reference (without cloning) this view. if the original wants to be clean by default
-                    // it should trigger the replace event
+                    // create a new reference (without cloning) this view.
+                    // if the original wants to be clean by default
+                    //   it should trigger the replace event
                     if (initialViewIdentifier !== viewIdentifier){
                         this.views[ viewIdentifier ] = view;
                     }
@@ -353,7 +356,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }
                 
                 if (view.setContent) {
-                    view.setContent() // all elements are set to undefined now
+                    view.setContent(view.elements) // all elements are set to undefined now
                 }
                 
                 return false
