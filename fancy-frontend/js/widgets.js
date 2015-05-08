@@ -255,11 +255,18 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     this._css.push(name);
                 },
 
-                use_locale: function(name){
+                use_locale: function(name, config){
                     if (this._locales === null) {
                         this._locales = [];
                     }
                     this._locales.push(name);
+                    if (config && config.widget_prefix) {
+                        if (this.translation_prefix && this.translation_prefix != config.widget_prefix) {
+                            this.log('(error)', 'currently only supports one translation_prefix', this.translation_prefix)
+                        }else{
+                            this.translation_prefix = config.widget_prefix;
+                        }
+                    }
                 },
 
                 use_template: function(name){
@@ -283,11 +290,16 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     this._libs.push(name);
                 },
 
-                use_fixture: function(name){
+                use_fixture: function(name, config){
                     if (this._fixtures === null) {
                         this._fixtures = [];
                     }
                     this._fixtures.push(name);
+                    if (config && config.uuid) {
+                        attr_name = config.attr || 'resource';
+                        this.options.scope['__' + attr_name + 'Id'] = config.uuid;
+                        this.options.scope['__' + attr_name + 'Target'] = 'uuid';
+                    }
                 },
 
                 initWidget: function(){
