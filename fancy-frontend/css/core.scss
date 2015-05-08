@@ -1,6 +1,6 @@
 @import 'consts';
 @import 'design';
-@import 'normalize';
+/*@import url('/css/normalize.css');TODO: versioning*/
 
 
 /*
@@ -241,10 +241,26 @@ table.#{$frontend-prefix}instance {
 .#{$frontend-prefix}instance.#{$frontend-prefix}action {
     @include actionMixin;
 }
+.#{$frontend-prefix}actions > .#{$frontend-prefix}action {
+    @include actionMixin;
+}
 
 .#{$frontend-prefix}navigation .#{$frontend-prefix}action {
     @include actionMixin;
     display: inline;
+}
+
+.#{$frontend-prefix}tag-navigation .#{$frontend-prefix}interactive-clickable {
+    &.#{$frontend-prefix}state-active {
+        background-color: #FFF;
+        border: 1px solid blue;
+    }
+    background-color: #CCC;
+    display: inline-block;
+    margin: 2px 3px;
+    padding: 1px 3px;
+    border: 1px solid #000;
+    border-radius: 3px;
 }
 
 .#{$frontend-prefix}instance.#{$frontend-prefix}state-initializing {

@@ -1,51 +1,53 @@
 @import 'consts';
 @import "toolkit";
 
-$zindex-overlay: 1;
+$zindex-overlay: 1 !default;
 
-$viewport-smartphone-min : 0;
-$viewport-smartphone-max : 765px;
-$viewport-tablet-min     : 766px;
-$viewport-tablet-max     : 1020px;
-$viewport-desktop-min    : 1021px;
-$viewport-desktop-max    : 1276px;
-$viewport-widescreen-min : 1277px;
-$viewport-widescreen-max : 1499px;
-$viewport-limit          : 1500px;
+$viewport-smartphone-min : 0 !default;
+$viewport-smartphone-max : 765px !default;
+$viewport-tablet-min     : 766px !default;
+$viewport-tablet-max     : 1020px !default;
+$viewport-desktop-min    : 1021px !default;
+$viewport-desktop-max    : 1276px !default;
+$viewport-widescreen-min : 1277px !default;
+$viewport-widescreen-max : 1499px !default;
+$viewport-limit          : 1500px !default;
 
 
-$color-area-1: #FFF;
-$color-area-1-alpha: 1;
+$color-area-1: #FFF !default;
+$color-area-1-alpha: 1 !default;
 
-$color-area-2: #FAFAFA;
-$color-area-2-alpha: 0.5;
+$color-area-2: #FAFAFA !default;
+$color-area-2-alpha: 0.5 !default;
 
-$color-area-3: #AA24E2;
-$color-area-3-alpha: 0.25;
+$color-area-3: #AA24E2 !default;
+$color-area-3-alpha: 0.25 !default;
 
-$color-font-default: #000;
-$color-font-default: #000;
+$color-font-default: #000 !default;
+$color-font-default: #000 !default;
 
-$color-font-weak: #000;
-$color-font-weak: #CCC;
+$color-font-weak: #000 !default;
+$color-font-weak: #CCC !default;
 
-$color-overlay: rgba(100, 100, 100, .2);
+$color-overlay: rgba(100, 100, 100, .2) !default;
+
+$color-navigation-background: '#FFF' !default;
 
 $zoom: 1;
 
-$widget-small-width: 250px;
-$widget-small-height: 250px;
+$widget-small-width: 250px !default;
+$widget-small-height: 250px !default;
 
-$body-width: 100%;
-$body-height: 100%;
+$body-width: 100% !default;
+$body-height: 100% !default;
 
-$page-width: 800px;
+$page-width: 800px !default;
 
-$font-stack: Helvetica, sans-serif;
-$font-size: 12px;
+$font-stack: Helvetica, sans-serif !default;
+$font-size: 12px !default;
 
-$img-root: $image-root+'fancy-frontend/img/';
-$img-loading-40x40: url($img-root+'loading.gif');
+$img-root: $image-root+'fancy-frontend/img/' !default;
+$img-loading-40x40: url($img-root+'loading.gif') !default;
 
 $shape: null;
 /*
@@ -228,6 +230,13 @@ $zoom: null;
 @mixin iconMixin_add{
     @include iconMixin;
     background-image: url($img-root+'icons/plus25.svg');
+    background-size: 15px 15px;
+    background-position: -2px -2px;
+}
+
+@mixin iconMixin_minus{
+    @include iconMixin;
+    background-image: url($img-root+'icons/line4.svg');
     background-size: 15px 15px;
     background-position: -2px -2px;
 }
@@ -577,7 +586,7 @@ $zoom: null;
         left: 0px;
         width: 100%;
         border-bottom: 0;
-        background-color: white;
+        background-color: $color-navigation-background;
         z-index: 100;
         &:before {
             display: none;
@@ -593,8 +602,8 @@ $zoom: null;
             .#{$frontend-prefix}action {
                 display: inline-block;
                 background-size: 20px 20px;
-                height: 20px;
-                width: 20px;
+                height: 30px;
+                width: 30px;
                 margin-bottom: -5px;
                 margin-top: 5px;
             }
