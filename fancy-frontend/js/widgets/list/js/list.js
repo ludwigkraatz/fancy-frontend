@@ -624,7 +624,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }else if ($this.options.onSelect){
                         curOutput.html($this.options.entryTemplate.replace(new RegExp('{index}', 'g'), elem_id))
                         curOutput.on('click', function(){
-                            $this.options.onSelect(elem.entry);
+                            $this.options.onSelect(elem);
                             $this.log('open ', elem_id);
                         });
                     }

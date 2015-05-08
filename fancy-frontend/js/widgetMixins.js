@@ -59,8 +59,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                             widget_identifier: 'fancy-frontend.list',
                             widget_options: {
                                 source: this.options.scope[menu_attr_name],
-                                onSelect: function(entry){
-                                    $this.element.trigger(ViewMixin.event_prefix + '-show', ['widget', entry])
+                                onSelect: function(elem){
+                                    $this.element.trigger(ViewMixin.event_prefix + '-show', ['widget', elem.entry])
                                 },
                                 entryTemplate: '<a href="#" ><span class="'+config.frontend_generateClassName('action')+' '+config.frontend_generateClassName('action-')+'{{ _source.{index}.entry.icon }}"></span><span class="'+config.frontend_generateClassName('title')+'" translate="{{ _source.{index}.label }}"></span></a>',
                                 entryTag: 'li',
