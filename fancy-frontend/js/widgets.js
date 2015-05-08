@@ -161,6 +161,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     template: views.TemplateView,
                     widget: views.WidgetView
                 },
+                _mixin_config: {},
                 _locales: null,
                 _libs: null,
                 _css: null,
@@ -227,6 +228,24 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             
                         }
                     }
+                },
+
+                use_mixin_config: function(mixin, config, mixin_class){
+                    mixin_class = mixin_class || this._widgetConfig.name_event_mixin;
+                    if (this._mixin_config === null) {
+                        this._mixin_config = {};
+                    }
+                    if (this._mixin_config[mixin_class] === undefined) {
+                        this._mixin_config[mixin_class] = {}
+                    }
+                    this._mixin_config[mixin_class][mixin] = config;
+                },
+                
+                _getMixinConfig: function(mixin_class, mixin, data){
+                    if (this._mixin_config[mixin_class] && this._mixin_config[mixin_class][mixin]) {
+                        return $.extend({}, data, this._mixin_config[mixin_class][mixin])
+                    }
+                    return data
                 },
 
                 use_css: function(name){
@@ -466,7 +485,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         if (mixin_dict[name].init) {
                             var config = {
                                 name: name,
-                                data: data !== undefined ? data : {}
+                                data: $this._getMixinConfig(event_prefix, name, data !== undefined ? data : {})
                             }
                             mixin_dict[name].init.call($this, config)
                         }
@@ -479,7 +498,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         if (mixin_dict[name].destroy) {
                             var config = {
                                 name: name,
-                                data: data !== undefined ? data : {} 
+                                data: $this._getMixinConfig(event_prefix, name, data !== undefined ? data : {})
                             }
                             mixin_dict[name].destroy.call($this, config)
                         }
