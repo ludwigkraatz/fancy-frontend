@@ -98,12 +98,16 @@ define(function(base){
     getVersion: function(module, path, config)
     {
         var paths = path.split('/');
-        var fileName = paths[paths.legth-1],
+        var fileName = paths[paths.length-1],
+            //app = this.getCurrentApp(config),
             version;
-        if (config.versions[module] !== undefined) {
-            version = config.versions[module][path];
+        if (module == 'js' && path.indexOf('.json', path.length - '.json'.length) === -1) {
+            path = path + '.js';
+        }
+        if (config.versions[path] !== undefined) {
+            version = config.versions[path];
         }else{
-            version = 0; // null; TODO: when version is null, dont use versioned resource
+            version = -1;
         }
         
         return version
@@ -121,6 +125,9 @@ define(function(base){
         var paths = path.split('/');
         var fileName = paths[paths.length-1];
         var version = this.getVersion(module, path, config);
+        if (version == -1 || version === undefined) {
+            return path
+        }
         var version_root = config.structure.version.root || '';
         return version_root + path + '/' + version + '/' + fileName
     },
@@ -366,7 +373,7 @@ define(function(base){
 
     load_locale: function(config, name){
         var result = {};
-        var container = 'fancy-frontend'; // default
+        var container = config.structure.locale.container;
         var app = this.getCurrentApp(config);
         var parts = target.split(':');
         if (parts.length == 1) {
@@ -394,7 +401,7 @@ define(function(base){
 
     load_plugin: function(config, target){
         var result = {};
-        var container = 'fancy-frontend'; // default
+        var container = config.structure.plugin.container;
         var parts = target.split(':');
         if (parts.length == 1) {
             plugin = parts[0];
