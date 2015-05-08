@@ -289,6 +289,82 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         mixins.DraggableMixin = DraggableMixin;
         
 
+        var TagNavigationMixin = {
+            init: function(mixinConfig){
+                var $this = this;
+                var target = mixinConfig.data.target || (this.$header || this.$footer)
+                var $navigation = $('<div></div>').addClass(config.frontend_generateClassName('tag-navigation'));
+                this.element.data('$TagNavigationTarget', target);
+                this.element.data('$TagNavigation', $navigation);
+                this.element.data('TagNavigationTags', []);
+                this.element.data('TagNavigationActive', mixinConfig.data.active || []);
+                target.prepend($navigation)
+                this.addNavigationTag = TagNavigationMixin.addNavigationTag.bind(this);
+                this.addNavigationTags = TagNavigationMixin.addNavigationTags.bind(this);
+            },
+            
+            addNavigationTag: function(tag, $elem){
+                tag = tag.toLowerCase();
+                $elem.addClass(
+                    config.frontend_generateClassName('tag-'+tag)
+                )
+                TagNavigationMixin.applyTag.call(this, tag)
+            },
+            
+            clickTag: function(tag_name, event){
+                var tag = $(event.target);
+                var tag_class = config.frontend_generateClassName('tag-'+tag_name);
+                if (!TagNavigationMixin.toggleTag.call(this, tag)) {
+                    this.element.data('$TagNavigationTarget').find('.'+tag_class).css('display', 'none');
+                }else{
+                    this.element.data('$TagNavigationTarget').find('.'+tag_class).css('display', '');
+                }
+                
+            },
+            
+            toggleTag: function(tag){
+                var class_name = config.frontend_generateClassName('state-active');
+                if (tag.hasClass(class_name)) {
+                    tag.removeClass(class_name);
+                    return false
+                }else{
+                    tag.addClass(class_name);
+                    return true
+                }
+            },
+            
+            applyTag: function(tag_name){
+                var tag = $('<div></div>'),
+                    tag_class = config.frontend_generateClassName('tag-'+tag_name),
+                    $this = this;
+                tag.html(tag_name);
+                tag.addClass(config.frontend_generateClassName('interactive-clickable'));
+                tag.click(TagNavigationMixin.clickTag.bind(this, tag_name))
+                this.element.data('$TagNavigation').append(tag)
+                if ($this.element.data('TagNavigationActive').indexOf(tag_name) != -1){
+                    tag.click();
+                }else{
+                    //this.element.data('$TagNavigationTarget').find('.'+tag_class).css('display', 'none');
+                };
+                this.element.data('TagNavigationTags').push(tag_name)
+            },
+            
+            addNavigationTags: function(tags, $elem){
+                var $this = this;
+                $.each(tags, function(index, tag){
+                    tag = tag.toLowerCase();
+                    $elem.addClass(
+                        config.frontend_generateClassName('tag-'+tag)
+                    )
+                    if ($this.element.data('TagNavigationTags').indexOf(tag) == -1) {
+                        TagNavigationMixin.applyTag.call($this, tag);
+                    }
+                })
+            }
+        }
+        mixins.TagNavigationMixin = TagNavigationMixin;
+        
+
         var DetachableMixin = {
             init: function(mixinConfig){
                 var $this = this;
@@ -343,6 +419,71 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             },
         }
         mixins.OSMixin = OSMixin;
+        
+        var SVGInjectorMixin = {
+            init: function(mixinConfig){
+                var $this = this,
+                    selector = (mixinConfig.data ? mixinConfig.data.selector : null) || ('.' + config.frontend_generateClassName('action'));
+                
+                this.element.addClass(config.frontend_generateClassName('fancyFrontendMixin-SVGInspector'));
+                this.on('init-widget-structure-done.header init-widget-structure-done.body init-widget-structure-done.footer',  function(event){
+                    $.each($this.element.find(selector), function (index, element){
+                        var $elem = $(element),
+                            background_image = $elem.css('background-image'),
+                            url_pattern = background_image.split('url('),
+                            backgorund_url = url_pattern.length > 1 ? url_pattern[1].slice(0,-1) : url_pattern[0];
+                        if (backgorund_url != 'none') {
+                            $elem.css('background-image', 'none')
+                            $elem.attr('data-src', backgorund_url)
+                            require(['fancyPlugin!lib:SVGInjector/svg-injector.min'], function(SVGInjector){
+                                SVGInjector(element);
+                            })
+                        }
+                    });
+                })
+            },
+        }
+        mixins.SVGInjectorMixin = SVGInjectorMixin;
+        
+        var ActionsMixin = {
+            init: function(mixinConfig){
+                var $this = this;
+                var $target = mixinConfig.data.target || this.$footer;
+                var discover = mixinConfig.data.discover || true;
+                if ($target.find('.' + config.frontend_generateClassName('actions')).size() == 0) {
+                    $target.append($('<div></div>').addClass(config.frontend_generateClassName('actions')))
+                }
+                $target = $target.find('.' + config.frontend_generateClassName('actions'));
+                this.element.data('fancy-frontend.mixins.ActionMixin.$target', $target);
+                if (discover && this.options.resource && !this.options.resource.isBlank()) {
+                    this.options.resource.discover(function(result){
+                        var actions = result.getResponse()['actions'];
+                        if (actions) {
+                            $this.log('(fancy-frontend)', '(mixin)', '(actions)', 'found actions', actions);
+                            for (var action in actions){
+                                if (action.toUpperCase() == action) {
+                                    // skip UppderCase Actions, as POST and PUT
+                                    continue
+                                }
+                                ActionsMixin.addAction.call($this, action, function(){
+                                    $this.options.resource.execute(action)
+                                })
+                            }
+                        }
+                    })
+                }
+            },
+            
+            addAction: function(action, handler){
+                var $this = this,
+                    action_trigger = $('<div></div>');
+                action_trigger.addClass(config.frontend_generateClassName('action'))
+                action_trigger.html(action);
+                action_trigger.click(handler)
+                this.element.data('fancy-frontend.mixins.ActionMixin.$target').append(action_trigger)
+            }
+        }
+        mixins.ActionsMixin = ActionsMixin;
 
         var _AttrMixin = {
             init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships){

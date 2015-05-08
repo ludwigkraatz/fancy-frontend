@@ -156,6 +156,9 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     view: mixins.ViewMixin,
                     loading: mixins.LoadingMixin,
                     resource: mixins.ResourceMixin,
+                    tag_navigation: mixins.TagNavigationMixin,
+                    actions: mixins.ActionsMixin,
+                    svg: mixins.SVGInjectorMixin,
                 },
                 views: {
                     template: views.TemplateView,

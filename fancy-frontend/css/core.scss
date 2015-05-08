@@ -19,6 +19,12 @@ html {
 
 .#{$frontend-prefix}instance {
     @include instanceDesign;
+    
+    .#{$frontend-prefix}fancyFrontendMixin-SVGInspector {
+        [data-src$='.svg']:not(svg) {
+            display: none
+        }
+    }
 }
 
 .#{$frontend-prefix}shape-shapeless, 
