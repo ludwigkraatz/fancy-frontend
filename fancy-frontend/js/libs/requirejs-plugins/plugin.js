@@ -304,7 +304,7 @@ define(function(base){
 
       return {
         reqPath: this.path(path, config, 'css'),
-        reqPlugin: this.load_plugin(config, '../css').reqPath
+        reqPlugin: this.load_plugin(config, 'css').reqPath
       }
     },
 
@@ -340,7 +340,7 @@ define(function(base){
 
       return {
         reqPath: this.path(path, config, 'partials'),
-        reqPlugin: this.load_plugin(config, '../text').reqPath
+        reqPlugin: this.load_plugin(config, 'text').reqPath
       }
     },
 
@@ -419,7 +419,7 @@ define(function(base){
 
         var path = config.structure.plugin.path
           .replace(/{plugin}/g, plugin)
-          .replace(/{container}/g, container);
+          .replace(/{container}/g, container || '.').replace('/./', '/');
 
         result.reqPath = this.path(path, config, 'js');
         //result.reqPlugin = target
