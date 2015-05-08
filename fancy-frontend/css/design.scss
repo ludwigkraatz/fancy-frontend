@@ -334,6 +334,11 @@ $zoom: null;
     background-image: url($img-root+'icons/house158.svg');
 }
 
+@mixin iconMixin_profile{
+    @include iconMixin;
+    background-image: url($img-root+'icons/house158.svg');
+}
+
 
 // interaction mixins
 

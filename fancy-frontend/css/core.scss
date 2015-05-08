@@ -290,7 +290,7 @@ table.#{$frontend-prefix}instance {
 }
 
 .#{$frontend-prefix}action-profile{
-    @include iconMixin_home;
+    @include iconMixin_profile;
 }
 
 .#{$frontend-prefix}action-grid{
