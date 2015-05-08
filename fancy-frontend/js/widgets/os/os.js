@@ -2,7 +2,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
     $(function() {
         var widgetConfig = $[config.apps['fancy-frontend'].namespace]._widgetConfig;
 
-        $.widget( config.apps['fancy-frontend'].namespace + '.settings', $[config.apps['fancy-frontend'].namespace].core, { // 
+        $.widget( config.apps['fancy-frontend'].namespace + '.os', $[config.apps['fancy-frontend'].namespace].core, { // 
             options: {
                 shape: widgetConfig.name_shape_overlay,
                 size: widgetConfig.name_size_small
