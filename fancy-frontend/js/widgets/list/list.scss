@@ -1,0 +1,23 @@
+@import 'consts';
+@import 'design';
+
+
+
+.#{$frontend-prefix}object-list {
+    .#{$frontend-prefix}interactive-tree {
+        @include actionMixin;
+    }
+    .#{$frontend-prefix}interactive-tree.#{$frontend-prefix}icon {
+        @include iconMixin_add;
+        margin: 3px 0 0 -13px;
+        position: absolute;
+    }
+    .#{$frontend-prefix}interactive-tree.#{$frontend-prefix}icon.#{$frontend-prefix}state-extended {
+        @include iconMixin_minus;
+    }
+    .#{$frontend-prefix}interactive-tree + .#{$frontend-prefix}object-list.#{$frontend-prefix}interaction-tree {
+        padding-left: 20px;
+    }
+    
+}
+

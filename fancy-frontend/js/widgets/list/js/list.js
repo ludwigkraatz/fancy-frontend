@@ -11,16 +11,19 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     entriesPerPage: null,
                     alphabet: ['-', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
                     use_view: true,
-                    headerFields: ['uuid', 'data'],
+                    headerFields: null,
                     resource: null,
                     allowedRelationships: null,
                     resourceList: null,
                     source: null,
+                    treeWalker: null,
                     entryWidget: null,
                     entryTemplate: null,
                     entryTag: null,
+                    entryView: 'detail',
                     inline: false,
                     selectFirst: false,
+                    cache_entries: true,
                 },
                 /*
                  *
@@ -32,13 +35,16 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 _create: function() {
                     var $this = this;
-                    this.asTable = !this.options.entryTemplate;
-                    if (!this.options.source)
-                            this.options.source = [];
+                    this.asTable = !this.options.entryTemplate && this.options.asTable !== false;
                     //this.use_mixin('view');
                     //this.use_mixin('api');
                     this.options.allowedRelationships = this.options.allowedRelationships || ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of];
                     this.element.addClass(this._widgetConfig.name_mixin_container);
+                    if (!this.options.source)
+                            this.options.source = [];
+                    if (this.options.scope._resource && this.options.scope._resource.getContent('json').constructor === Array){
+                        this.options.source = this.options.scope._resource.getContent('json');
+                    }
                     
                     var tag = this.asTable ? 'table' : 'div';
                     this.page = null;
@@ -212,25 +218,35 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                                 // TODO: make this less static: this.view('create', [resourceList])
                                                 $this.trigger(viewMixinEventPrefix + '-show', ['create', {relationship: resourceList}]);
                                             }else{                                                
-                                                $this.goToPage(1);
+                                                $this.goToPage(1);  // TODO: remove this. this.options.source was changed - so it will reload
                                             }
                                         })
                                 }
                             }
                         })
-                    }else if (this.options.source){
-                        //$this.$container.html('TODO');
-                        $this.log('TODO', 'TODO: implement plain source list');
-                        if ($this.options.source.length == 0) {
+                        return
+                    }
+                    if (this.options.source){
+                        if (typeof this.options.source == 'object' && !Array.isArray(this.options.source)) {
+                            $this.log('(fancy-frontend)', '(list)', 'plain object tree', this.options.source);
+                            // this is an object. show tree
+                            // TODO: set header of object
+                            this.tree_source = this.options.source;
+                            // this results in a new list refresh
+                            this.options.source = Object.keys(this.tree_source);
+                        }else if ($this.options.source.length == 0) {
+                            $this.log('(fancy-frontend)', '(list)', 'plain empty source list', this.options.source);
                             // TODO: make this less static: this.view('create', [resourceList])
-                            $this.trigger(viewMixinEventPrefix + '-show', ['create', {relationship: resourceList}]);
+                            if (this.options.use_view){
+                                $this.trigger(viewMixinEventPrefix + '-show', ['create', {relationship: resourceList}]);
+                            };
                         }else{
-                            // TODO: this is a digest dirty fix
-                            setTimeout(function(){$this.goToPage(1);}, 100)
+                            $this.log('(fancy-frontend)', '(list)', 'plain source list', this.options.source);
+                            $this.goToPage(1);
                         }
                     }else{
+                        $this.log('(fancy-frontend)', '(list)', 'no source');
                         $this.$container.html('');
-                        $this.log('emptying list');
                     }
                 },
                 
@@ -249,6 +265,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 initBody: function(){
                     if (!this.asTable) {
+                        this.$container = this.$body;
                         return this._superApply( arguments );
                     }
                     
@@ -274,6 +291,17 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     
                     this.addHeader('', this._widgetConfig.name_classes_header);
                     if (this.asTable) {
+                        if (!this.options.headerFields) {
+                            this.log('(fancy-frontend)', '(list)', 'setting header fields from source', this.options.source)
+                            if (!this.options.source || this.options.source.length == 0) {
+                                this.options.headerFields = ['uuid', 'data']
+                            }else{
+                                this.options.headerFields = [];
+                                for (var index in this.options.source[0]) {
+                                    this.options.headerFields.push(index);
+                                }
+                            }
+                        }
                         for (var header in this.options.headerFields){
                             this.addHeader(this.options.headerFields[header], this._widgetConfig.name_classes_body);
                         }
@@ -595,38 +623,111 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     var $this = this;
                     var tag = $this.options.entryTag ? this.options.entryTag : ($this.asTable ? 'tr' : 'div');
                     var curOutput = '<'+tag+' class="dynamic-list-entry" ',
-                        elem_id = '!',
+                        elem_id = elem ? this.getIdForEntry(elem) : '!',
                         cached_content;
-                    if (elem) {
-                        elem_id = $this.getIdForEntry(elem);
+                    if (elem && elem_id != '!') {
                         curOutput += 'data-dynamic-list-entry-id="'+elem_id+'">';
                         
-                        if ($this.$list.data('entry-' + elem_id) != undefined) {
-                            cached_content = $this.$list.data('entry-' + elem_id);
-                            if (!$this.options.entryWidget){
-                                curOutput += cached_content;
+                        if ($this.options.cache_entries) {
+                            if ($this.$list.data('entry-' + elem_id) != undefined) {
+                                cached_content = $this.$list.data('entry-' + elem_id);
+                                if (!$this.options.entryWidget){
+                                    curOutput += cached_content;
+                                }
                             }
                         }
-                    
                     }
                     curOutput += '</'+tag+'>'
                     curOutput = $(curOutput);
+                    var entry_id = elem_id,
+                        entry = elem,
+                        $children_container,
+                        tree;
+                    if (this.options.treeWalker) {
+                        var tree_elem =  entry != entry_id ? entry_id : null,
+                            tree_source = entry;
+                        if (this.tree_source) {
+                            // when this widget displays a list displaying an object, it iterates through an array
+                            // containing its attributes
+                            tree_elem = entry;
+                            tree_source = this.tree_source[tree_elem];
+                        }
+                        entry_id = tree_elem;
+                        entry = tree_source;
+                        tree_options = {};
+                        for (var attr in this.options) {
+                            if (['resource', 'resourceList', 'source'].indexOf(attr) == -1) {
+                                tree_options[attr] = this.options[attr];
+                            }
+                        }
+                        tree_template = {
+                            css_class: ['interaction-tree'],
+                            widget_identifier: 'fancy-frontend.list?',
+                            widget_options: tree_options
+                        }
+                        tree = tree_source ? this.options.treeWalker(tree_elem, tree_source, tree_template) : null;
+                    }
+                    
                     //curOutput.selectable();
                     //curOutput.attr('plugin-reference', '__id_'+elem_id);
                     //$this.options.scope['__id_'+elem_id] = elem;
+                    var entryTemplate = this.options.entryTemplate ? (
+                                            typeof(this.options.entryTemplate) == 'function' ?
+                                            this.options.entryTemplate(entry, entry_id) :
+                                            this.options.entryTemplate.replace(new RegExp('{index}', 'g'), entry_id)
+                                        ) : null;
                     if ($this.options.entryWidget) {
                         $this.options.widgetCore.create_widget(
                                                                curOutput,
-                                                               $this.options.entryWidget+':'+ elem_id,
+                                                               $this.options.entryWidget+':'+ elem_id + ($this.options.entryView ? '#' + $this.options.entryView : ''),
                                                                {
-                                                                content: cached_content ? cached_content : $this.options.entryTemplate
+                                                                content: cached_content ? cached_content : entryTemplate,
+                                                                resource: typeof elem == 'object' ? elem : undefined
                                                                });
-                    }else if ($this.options.onSelect){
-                        curOutput.html($this.options.entryTemplate.replace(new RegExp('{index}', 'g'), elem_id))
+                    }else if (this.options.entryTemplate){
+                        if (entryTemplate)curOutput.html(entryTemplate)
+                        else return entryTemplate;
+                    }else if (elem){
+                        var ret = [];
+                        var _ret = $('<td class="'+config.frontend_generateClassName('header')+'"></td>');
+                        ret.push(_ret);
+                        $.each($this.getHeaderFields(), function(index, header) {
+                            var $header = $(header);
+                            header = $header.html();
+                            _ret = $('<td></td>');
+                            _ret.html(elem[header]);
+                            ret.push(_ret);
+                        });
+                        _ret = $('<td class="'+config.frontend_generateClassName('footer')+'"></td>');
+                        ret.push(_ret);
+                        curOutput.append(ret);
+                    }
+                    if ($this.options.onSelect){
                         curOutput.on('click', function(){
+                            $this.$container.children().removeClass(config.frontend_generateClassName('state-active'))
+                            curOutput.addClass(config.frontend_generateClassName('state-active'))
                             $this.options.onSelect(elem);
+                            
                             $this.log('open ', elem_id);
                         });
+                    }
+                    if (tree) {
+                        var $children_container = this.newElement(tree).css('display', 'none');
+                        curOutput = curOutput.append($children_container).prepend('<span class="'+config.frontend_generateClassName('interactive-tree')+' '+config.frontend_generateClassName('icon')+'"></span>');
+
+                        var $widget = curOutput.find('.' + config.frontend_generateClassName('interaction-tree')),
+                            $btn = curOutput.find('.' + config.frontend_generateClassName('interactive-tree'));
+
+                        $btn.bind('click focus', function(){
+                            if (!$widget.data('__initialized')) {
+                                $widget.toggle();
+                                $widget.click()
+                            }else{
+                                $widget.toggle();
+                            }
+                            $btn.toggleClass(config.frontend_generateClassName('state-extended'))
+                        })
+                        this.log('(fancy-frontend)', '(widgets)', '(list)', 'found additional source for:', tree_elem)
                     }
                     
                     if (elem || !this.asTable) {
@@ -655,7 +756,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         })
                         var output = [];
                         $.each(data, function(index, elem){
-                            output.push($this.createEntry(elem));
+                            var content = $this.createEntry(elem);
+                            if (content)output.push(content);
                         });
                         $container.prepend(output);
                         $this.apply($container)
