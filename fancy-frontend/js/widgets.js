@@ -384,7 +384,6 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }*/
                     this.initWidget();
                     
-                    
                     // start loading
                     this.loadDependencies();
                     this.initWidgetStructure();
@@ -396,7 +395,6 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             $this.trigger($this._widgetConfig.name_event_mixin + '-found', mixin_package);
                         });
                     }
-                    
                     this.setupContent()
                     // show widget content, because could be with content
                     
@@ -453,17 +451,28 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 },
                 
                 seperate: function(callback){
-                    var clone = $('<div></div>');
-                    this.options.widgetCore.create_widget(clone, this.generateStateIdentifier(), {closable: true});
-                    var $this = this;
-                    this.apply(clone, function(content){
-                        $this.element.closest('.'+$this._widgetConfig.name_shape_widget).after(content);
-                    })
+                    var target;
+                    if (this.element.closest('.'+this._widgetConfig.name_shape_widget).size()) {
+                        target = this.element.closest('.'+this._widgetConfig.name_shape_widget).after.call.bind(this.element.closest('.'+this._widgetConfig.name_shape_widget));
+                    }
+                    if (this.element.closest('.'+config.frontend_generateClassName('object-view')).size()) {
+                        target = this.element.closest('.'+config.frontend_generateClassName('object-view'));
+                    }
+                    if (target === undefined) {
+                        target = this.element.append;
+                    }
+                    this.newElement({
+                        apply_to: target,
+                        widget_identifier: this.generateStateIdentifier(),
+                        widget_options: {
+                            closable: true
+                        }
+                        })
                     
                 },
                 
                 generateStateIdentifier: function() {
-                    return 'object:' + this.options.scope.resource.uuid + '#detail'
+                    return this.__proto__.namespace + '.' + this.__proto__.widgetName + ':' + this.options.scope.resource.uuid + '#detail'
                 },
                 
                 _destroy: function(){
@@ -655,17 +664,16 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     clear = clear === undefined ? true : clear;
                     this.setShape();
                     var $this = this,
-                        footer_tag = this.element.filter('table').size() ? 'tfoot' : this.element.filter('tr').size() ? 'td' : 'div',
-                        header_tag = this.element.filter('table').size() ? 'thead' : this.element.filter('tr').size() ? 'td' : 'div',
-                        body_tag = this.element.filter('table').size() ? 'tbody' : this.element.filter('tr').size() ? 'td' : 'div',
+                        isTable = this.element.filter('table').size(),
+                        footer_tag = isTable ? 'tfoot' : this.element.filter('tr').size() ? 'td' : 'div',
+                        header_tag = isTable ? 'thead' : this.element.filter('tr').size() ? 'td' : 'div',
+                        body_tag = isTable ? 'tbody' : this.element.filter('tr').size() ? 'td' : 'div',
                         _body;
                     var missingStructure = '',
                     bodyClass = this._widgetConfig.name_classes_body,
                     headerClass = this._widgetConfig.name_classes_header,
                     footerClass = this._widgetConfig.name_classes_footer;
-                    /*if (content) {
-                        this.element.append(content)
-                    }*/
+                    
                     if (!elements){
                         elements = ['header', 'body', 'footer']
                     }
@@ -675,7 +683,6 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                     }
                     for (var _element in elements) {
                         var elem = elements[_element];
-                            
                         
                         if (elem == 'header') {
                             if (this.element.filter(header_tag + '.' + headerClass).size()){
@@ -689,29 +696,31 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                             this.initHeader();
                         }else if (elem == 'body') {
                             var _body = '<'+body_tag+' class="' + bodyClass + '"></'+body_tag+'>';
-                            //if (this.element.children('.' + bodyClass).size() == 0) {
-                            
+
                             if (this.element.filter(body_tag + '.' + bodyClass).size()){
                                 this.$body = this.element.filter(body_tag + '.' + bodyClass);
                             }else if (this.$body) {
                                 this.$body.addClass(bodyClass);
                             }else{
-                                this.$body = $(_body);
                                 content = this.element.children(
                                                           ':not('+ this._widgetConfig.selector_elements_header +
-                                                          '):not('+ this._widgetConfig.selector_elements_footer +')'
+                                                          '):not('+ this._widgetConfig.selector_elements_footer +
+                                                          '):not(script)'   // ionic framework deployment on IOS
                                                           );
-                                if (content.size() != 0) {
-                                    content.wrapAll(this.$body);
+                                if (content.filter(body_tag + '.' + bodyClass).size()) {
+                                    this.$body = content.filter(body_tag + '.' + bodyClass);
                                 }else{
-                                    this.$header.after(this.$body);
+                                    this.$body = $(_body);
+                                    if (content.size() != 0) {
+                                        content.wrapAll(this.$body);
+                                    }else{
+                                        this.$header.after(this.$body);
+                                    }
                                 }
                             }
-                            //};
         
                             if (this.element.filter('.' + this._widgetConfig.name_shape_row).size()){
                                 var first = true;
-                                
                                 if (this.$body.size() != this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).size()){
                                     this.element.parent('.' + bodyClass).siblings('.' + headerClass).children('.' + bodyClass).each(function() {
                                         if (first) {
@@ -719,16 +728,15 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                                         }else{
                                             var $body = $(_body);
                                             $this.$body.after($body);
-                                            $this.$body = $this.$body.add($body);
                                         }
                                     });
+                                    this.$body = this.element.children('.' + bodyClass);
                                 };
+                                
                             };
                             this.initBody();
                         }else if (elem == 'footer') {
-                            //if (this.element.children('.' + footerClass).size() == 0) {
-                                
-                            if (this.element.filter(footer_tag + '.' + footerClass).size()){
+                            if (this.element.children(footer_tag + '.' + footerClass).size()){
                                 this.$footer = this.element.filter(footer_tag + '.' + footerClass);
                             }else if (this.$footer) {
                                     this.$footer.addClass(footerClass);
@@ -736,14 +744,13 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                                     this.$footer = $('<'+footer_tag+' class="' + footerClass + '"></'+footer_tag+'>');
                                     this.element.append(this.$footer);
                                 };
-                            //};
                             this.initFooter();
                         }
                         ret[elem] = this['$'+elem];
                         
                         this.trigger('init-widget-structure-done.' + elem)
                     }
-                    //this.apply(this.element);
+
                     return ret;
                 },
                 
@@ -767,16 +774,46 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         }
                     }
                 },
+                
+                translate_to: function($elem, identifier, default_fallback){
+                    if (identifier[0] == '.' ) {
+                        if (!this.translation_prefix) {
+                            return $elem.html(default_fallback);
+                        }
+                        identifier = this.translation_prefix + identifier;
+                    }
+                    $elem.attr('translate', identifier);
+                    this.apply($elem);
+                    return;
+                    return this.translate(identifier, function(translated){
+                        if (translated != identifier) {
+                            $elem.html(translated)
+                        }else{
+                            $elem.html(default_fallback || translated)
+                        }
+                    })
+                },
 
                 initBody: function(){
                 },
 
                 initFooter: function(){
                 },
+                
+                setHeadline: function(text){
+                    var headline = $('<h3  class="'+this._widgetConfig.name_classes_title+'"></h3>');
+                    if (text){
+                        headline.html(text);
+                    }else{
+                        this.translate_to(headline, '.TITLE', this.__proto__.widgetFullName);
+                    }
+                    //headline.html(this.__proto__.widgetFullName);
+                    this.$header.prepend(headline);
+                },
 
                 initHeader: function(){
                     if (this.$header.find(':header').length == 0) {
-                        this.$header.prepend('<h3  class="'+this._widgetConfig.name_classes_title+'">'+this.__proto__.widgetFullName+'</h3>');
+                        this.setHeadline()
                     }
                     this.$headline = this.$header.children(':header');
                     
