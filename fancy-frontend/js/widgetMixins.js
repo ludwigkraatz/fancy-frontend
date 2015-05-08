@@ -4,7 +4,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         var Mixin = {};
 
         var ViewMixin = {
-                event_prefix: 'dynamic-view',
+                event_prefix: 'fancy-frontend-ViewMixin',
                 init: function(mixinConfig){
                     var $this = this;
                     
@@ -18,7 +18,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     this.setupMixinHandlers(ViewMixin.event_prefix, this.views);                    
                     if (mixinConfig.data.navigation) {
                         ViewMixin.setupNavigation.call($this, mixinConfig.data.navigation);
-                        this.on('init-widget-structure-done.header, init-widget-structure-done.footer', function(event){
+                        this.on('init-widget-structure-done.header init-widget-structure-done.footer', function(event){
                             ViewMixin.setupNavigation.call($this, mixinConfig.data.navigation);
                         })
                     }
@@ -191,7 +191,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     
                     this.element.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
-                        $this.options.scope.log.debug('show view:', name, data);
+                        $this.options.scope.log.debug('show view initial:', name, data);
                         //if (mixinConfig.hasOwnProperty('_activeView_package') && mixinConfig._activeView_package) {
                             ViewMixin.runViewWidget.call($this, mixinConfig,
                                                 $this.initWidgetStructure.bind($this, mixinConfig.elements, false),
@@ -330,19 +330,19 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         }
         mixins.ApiMixin = ApiMixin;
         
-        var SettingsMixin = {
+        var OSMixin = {
             init: function(mixinConfig){
                 this.on('init-widget-structure-done.header', function(event){
                     var $settingsBtn = this.newElement({
-                        plugin_identifier: 'fancy-frontend.settings?',
+                        plugin_identifier: 'fancy-frontend.os?',
                         view: '',
-                        icon: 'settings',
+                        icon: 'os',
                         target: this.$header
                     });
                 })
             },
         }
-        mixins.SettingsMixin = SettingsMixin;
+        mixins.OSMixin = OSMixin;
 
         var _AttrMixin = {
             init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships){
