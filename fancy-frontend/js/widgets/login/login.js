@@ -1,43 +1,60 @@
-define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], function($, config){
-    $(function() {
+define(['fancyPlugin!widget:fancy-frontend:resource_interface'], function(fancyWidgetCore){
+    var $ = fancyWidgetCore.$,
+        config = fancyWidgetCore.getFrontendConfig(),
+        widgetConfig = fancyWidgetCore.getWidgetConfig();
 
-       $.widget( config.apps['fancy-frontend'].namespace + '.login', $[config.apps['fancy-frontend'].defaults_namespace].core ,{
+    fancyWidgetCore_login = fancyWidgetCore.derive('resource_interface', {
+        namespace: config.apps['fancy-frontend'].namespace,
+        name: 'login',
+        widget: {
             
                 options: {
                     successUrl:null,
+                    shape: 'content'
                 },
-            
+                
+                initBody: function(){
+                    this._superApply(arguments);
+                    this.elements.content = this.$body;
+                },
+                
                 _create: function(){
                     var $this = this;
-                    
+                    this.use_mixin('view');
+                    this.context = {
+                        parentLanguages: {},
+                        siteLanguages: []
+                    }
+                    this.elements = {};
                     this._superApply( arguments );
                     require(['fancyPlugin!cookie'], function($a){
                         
-                        $this.context = {
-                            parentLanguages: {},
-                            siteLanguages: []
-                        }
-                        $this.elements = {};
                         
                                             
-                        var $content = $('<div/>');
-                        $this.elements.content = $content;
-                        $this.element.html($content);
+                        //var $content = $('<div/>');
+                        //$this.elements.content = $content;
+                        //$this.$body = $content;
+                        //$this.element.html($content);
                         
                         $this.elements.providerContainer = $this.options.providerContainer;
                         if (!$this.elements.providerContainer || $this.elements.providerContainer.size() == 0) {
                             var $container = $('<div class=""/>');
-                            $this.element.prepend($container);
+                            $this.$body.prepend($container);
                             $this.elements.providerContainer = $container;
                         }
                         
-                        
-                        if ($.cookie('resourceaccess-identity') && false) { //this._hasUser
-                            $this.options.widgetCore.endpoint.getAuthStatus(function(result){
-                                if (result.auth) {
-                                    $this.confirm();
-                                }else{
-                                    $this.login();
+                        current_identity = $.cookie('resourceaccess-identity');
+                        if (current_identity && $this.getAuth().isAuthenticated() !== false) {
+                            $this.log('(login)', 'found identity. try to use it', current_identity)
+                            console.error('not implemented yet');
+                            return $this.login();
+                            $this.getAuth().refresh({
+                                callback: function(result){
+                                    if (result.isAuthenticated()) {
+                                        $this.confirm(result);
+                                    }else{
+                                        $this.login();
+                                    }
                                 }
                             })  
                         }else{
@@ -56,7 +73,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     return this.options.successUrl || window.location.href;//window.location.pathname +  window.location.search +  window.location.hash;
                 },
                 
-                confirm: function(){
+                confirm: function(auth){confirm('confirm profile' + auth.profile)
                     var $this = this;
                     this.elements.content.append('<input type="button" value="Ok" class="accept-button button" />')
                     
@@ -78,25 +95,32 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 login: function(){
                     
-                    var $this = this;
-                    this.elements.content.html('');
+                    var $this = this,
+                        $form = $('<form action="" method="post"></form>');
+                    this.elements.content.html($form);
                     
-                    var $login = $('<p/>');
+                    var $login = $('<p></p>');
                     $login.append('<label for="id_login">E-mail:</label>');
                     $login.append('<input id="id_login" name="login" placeholder="E-mail address" type="text" />');
-                    this.elements.content.append($login);
+                    $form.append($login);
                     
                     var $password = $('<p/>');
                     $password.append('<label for="id_password">Password:</label>');
                     $password.append('<input id="id_password" name="password" placeholder="Password" type="password" />');
-                    this.elements.content.append($password);                    
+                    $form.append($password);                    
                     
-                    this.elements.content.append('<a class="secondaryAction reset-password" href="/accounts/password/reset/">Forgot Password?</a>');
-                    this.elements.content.append('<input type="button" name="submit" value="Login" class="login-button button" />')
+                    $form.append('<a class="secondaryAction reset-password" href="/accounts/password/reset/">Forgot Password?</a>');
+                    $form.append('<input type="submit" name="submit" value="Login" class="login-button button" />')
                     
-                    this.elements.content.append('<br /><a href="#" class="change-register">Register</a>');
+                    $form.append('<br /><a href="#" class="change-register">Register</a>');
                     
                     
+                    $form.bind('submit', function(event){
+                        $this.executeLogin();
+                        event.stopImmediatePropagation();
+                        event.preventDefault();
+                        return false;
+                    });
                     this.elements.content.find('.login-button').bind('click', function(event){
                         $this.executeLogin();
                         event.stopImmediatePropagation();
@@ -120,26 +144,39 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     this.showSocialProviders(false);
                 },
                 
-                completed: function(){                    
-                    this.options.callback(true);
+                completed: function(result){
+                    var callback = this.options.callback;
+                    delete this.options.callback;
                     this.destroy();
+                    if (callback) {
+                        callback(result);
+                    }
                 },
                 
                 executeLogin: function(){
-                    var $this = this;
-                    this.options.widgetCore.endpoint.login({
-                        auth:     'credentials',
+                    var $this = this,
+                        host = undefined;
+                    this.getAuth().login({
+                        method: 'credentials',
+                        host: host,
                         username: this.elements.content.find('#id_login').val(),
                         password: this.elements.content.find('#id_password').val(),
-                    }, function(result){
-                        if (result.isAuthenticated) {
-                            $this.completed();
-                            require(['fancyPlugin!cookie'], function($a){
-                                    $.cookie('resourceaccess-identity', true, { path: '/', expires: 14 });
-                            });    
-                        }else{
-                            // todo
-                            alert('wrong credentials')
+                        callback: function(result){
+                            var is_authenticated = false;
+                            if (result && typeof(result.isAuthenticated) == 'function') {
+                                is_authenticated = result.isAuthenticated(host)
+                            }else if (result) {
+                                is_authenticated = result
+                            }
+                            if (is_authenticated) {
+                                $this.completed(result);
+                                require(['fancyPlugin!cookie'], function($a){
+                                        $.cookie('resourceaccess-identity', result.getProfile(), { path: '/', expires: 14 });
+                                });    
+                            }else{
+                                // todo
+                                alert('wrong credentials')
+                            }
                         }
                     });
                 },
@@ -180,35 +217,55 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 },
                 
                 register: function(){
+                    this.showView('register');
+                },
                     
-                    var $this = this;
+                registerView: function(){
                     this.elements.content.html('');
-                    
-                    var $login = $('<p/>');
-                    $login.append('<label for="id_login">E-mail:</label>');
-                    $login.append('<input id="id_login" name="login" placeholder="E-mail address" type="text" />');
-                    this.elements.content.append($login);
-                    
-                    var $password = $('<p/>');
-                    $password.append('<label for="id_password">Password:</label>');
-                    $password.append('<input id="id_password" name="password" placeholder="Password" type="password" />');
-                    this.elements.content.append($password);   
-                    
-                    var $password = $('<p/>');
-                    $password.append('<label for="id_password2">Password Confirm:</label>');
-                    $password.append('<input id="id_password2" name="password2" placeholder="Password" type="password" />');
-                    this.elements.content.append($password);   
-                    
-                    this.elements.content.append('<input type="button" name="submit" value="Register" class="register" />')
-                    
-                    this.elements.content.append('<br /><a href="#" class="change-login">Login</a>');
-                    this.elements.content.find('.change-login').bind('click', function(event){
-                        $this.login();
-                        event.stopImmediatePropagation();
-                        
-                        return false;
-                    });
-                    
+                    var $this = this;
+                    this.require_mixin('api');
+                    this.api.discover({
+                        uri: 'auth/profiles/?action=register',
+                        // TODO: action: 'register',
+                        source: this,
+                        done: function(result){
+                            
+                            var resource = result.getResource()
+                            this.require_mixin('edit', {source: resource}, this.mixins.view.event_prefix);
+                            this.require_mixin('edit', {source: resource}, this.mixins.view.event_prefix);
+                            
+                            var $login = $('<p/>');
+                            $login.append('<label for="id_login">E-mail:</label>');
+                            $login.append('<input id="id_login" name="login" placeholder="E-mail address" type="text" />');
+                            this.elements.content.append($login);
+                            
+                            var $password = $('<p/>');
+                            $password.append('<label for="id_password">Password:</label>');
+                            $password.append('<input id="id_password" name="password" placeholder="Password" type="password" />');
+                            this.elements.content.append($password);   
+                            
+                            var $password = $('<p/>');
+                            $password.append('<label for="id_password2">Password Confirm:</label>');
+                            $password.append('<input id="id_password2" name="password2" placeholder="Password" type="password" />');
+                            this.elements.content.append($password);   
+                            
+                            var $btn = $('<input type="button" name="submit" value="Register" class="register" />');
+                            this.elements.content.append($btn);
+                            $btn.click(function(event){
+                                event.preventDefault();
+                                this.executeRegister();
+                            }.bind(this))
+                            
+                            this.elements.content.append('<br /><a href="#" class="change-login">Login</a>');
+                            this.elements.content.find('.change-login').bind('click', function(event){
+                                $this.login();
+                                event.stopImmediatePropagation();
+                                
+                                return false;
+                            });
+                            
+                        }.bind(this)
+                    })
                     this.showSocialProviders(true);
                 },
                 
@@ -292,10 +349,9 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     var ret = url+'&'+name+'='+encodeURIComponent(value);
                     return ret
                 }
-        });
+        }
+    });
 
-
-    })
-    return $
+    return fancyWidgetCore_login
 });
     

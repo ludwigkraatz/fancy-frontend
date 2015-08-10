@@ -1,52 +1,72 @@
-define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], function($, config){
-    $(function() {
-        var widgetConfig = $[config.apps['fancy-frontend'].namespace]._widgetConfig;
+define(['fancyPlugin!fancyWidgetCore'], function(fancyWidgetCore){
+    var $ = fancyWidgetCore.$,
+        config = fancyWidgetCore.getFrontendConfig(),
+        widgetConfig = fancyWidgetCore.getWidgetConfig();
 
-        $.widget( config.apps['fancy-frontend'].namespace + '.os', $[config.apps['fancy-frontend'].namespace].core, { // 
+    fancyWidgetCore_os = fancyWidgetCore.derive('widget', {
+        namespace: config.apps['fancy-frontend'].namespace,
+        name: 'os',
+        widget: { // 
             options: {
                 shape: widgetConfig.name_shape_overlay,
-                size: widgetConfig.name_size_small
+                size: widgetConfig.name_size_small,
+                owner: null
             },
             
             _create: function(){
                 var $this = this;
                 //this._superApply( arguments );
                 if (!this.options.inactive) {
-                    this.element.addClass(this._widgetConfig.name_state_active)
+                    this.element.addClass(widgetConfig.name_state_active)
                 }
                 this.element.on('blur', function(){
-                    $this.element.removeClass($this._widgetConfig.name_state_active)
+                    $this.element.removeClass(widgetConfig.name_state_active)
                 })
                 this.element.on('focus', function(){
-                    $this.element.addClass($this._widgetConfig.name_state_active)
+                    $this.element.addClass(widgetConfig.name_state_active)
                 })
-                this.initWidget();
+                this._superApply( arguments );
+                //this.initWidget();
                 this.initWidgetStructure();
                 this.trigger('end-initializing');
             },
             
             initBody: function(){
                 var settings = $('<ul></ul>'),
-                    _settings = this.get_settings();
-                for (index in _settings) {
-                    var setting = _settings[index];
-                    settings.append('<li>'+setting+'</li>')
-                }
+                    setting,
+                    $this = this;
+                $.each(this.get_settings(), function(index, setting) {
+                    _setting = $('<li>'+setting.label+'</li>');
+                    if (!setting.callback) {
+                        throw Error('couldnt find settings callback for setting', setting)
+                    }
+                    _setting.click(setting.callback.bind($this.options.owner, $this));
+                    settings.append(_setting)
+                })
                 this.$body.append(settings)
             },
             
             get_settings: function(){
+                var $this = this;
                 return [
-                    'profile',
-                    'privacy',
-                    'help',
-                    'remote',
-                    'share'
+                    {
+                        'label': 'bigger',
+                        'callback': function(){
+                            if ($this.options.owner){
+                                $this.options.owner.setShape(undefined, widgetConfig.name_size_full)
+                                $this.element.trigger('blur');
+                            }
+                        }
+                    }
+                    //'profile',
+                    //'privacy',
+                    //'help',
+                    //'remote',
+                    //'share'
                 ]
             }
-        });
+        }
+    });
 
-
-    })
-    return $
+    return fancyWidgetCore_os
 });

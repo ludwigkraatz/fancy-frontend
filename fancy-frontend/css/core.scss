@@ -15,6 +15,12 @@ html {
     @extend %html;
 }
 
+.#{$frontend-prefix}auth-overlay {
+    position: absolute;
+    right: 15px;
+    top: 3px;
+}
+
 //
 
 .#{$frontend-prefix}instance {
@@ -304,6 +310,14 @@ table.#{$frontend-prefix}instance {
 }
 .#{$frontend-prefix}action-add{
     @include iconMixin_add;
+    @include actionMixin;
+}
+.#{$frontend-prefix}action-delete{
+    @include iconMixin_trash;
+    @include actionMixin;
+}
+.#{$frontend-prefix}action-edit{
+    @include iconMixin_pen;
     @include actionMixin;
 }
 .#{$frontend-prefix}action-focus{

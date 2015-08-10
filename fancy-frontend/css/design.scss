@@ -234,6 +234,11 @@ $zoom: null;
     background-position: -2px -2px;
 }
 
+@mixin iconMixin_trash{
+    @include iconMixin;
+    background-image: url($img-root+'icons/delete48.svg');
+}
+
 @mixin iconMixin_minus{
     @include iconMixin;
     background-image: url($img-root+'icons/line4.svg');
@@ -324,9 +329,19 @@ $zoom: null;
     background-image: url($img-root+'icons/settings21.svg');
 }
 
+@mixin iconMixin_os{
+    @include iconMixin;
+    background-image: url($img-root+'icons/settings21.svg');
+}
+
 @mixin iconMixin_pen{
     @include iconMixin;
     background-image: url($img-root+'icons/pen29.svg');
+}
+
+@mixin iconMixin_desktop{
+    @include iconMixin;
+    background-image: url($img-root+'icons/desktop14.svg');
 }
 
 @mixin iconMixin_home{
@@ -336,7 +351,7 @@ $zoom: null;
 
 @mixin iconMixin_profile{
     @include iconMixin;
-    background-image: url($img-root+'icons/house158.svg');
+    background-image: url($img-root+'icons/user-avatar1.svg');
 }
 
 
@@ -494,6 +509,10 @@ $zoom: null;
         content: '';
     }
     border: 1px solid transparent;
+    
+    nav.#{$frontend-prefix}navigation{
+        /*display: none;*/
+    }
 }
 
 @mixin containerDesign {
@@ -501,6 +520,15 @@ $zoom: null;
     @include hasHeader;*/
     //height: 100%;  // for better table support
     width: 100%;
+    nav.#{$frontend-prefix}tag-navigation{
+        position: absolute;
+        margin-left: -200px;
+        width: 200px;
+        background-color: white;
+        height: inherit;
+        max-height: inherit;
+        overflow: scroll;
+    }
 }
 
 @mixin overlayDesign {
@@ -550,7 +578,7 @@ $zoom: null;
 }
 
 @mixin TopNavigationDesign {
-    > .#{$frontend-prefix}header > .#{$frontend-prefix}navigation {
+    > nav.#{$frontend-prefix}navigation > ul {
         list-style: none;
         border-bottom: 0.1em solid black;
         margin: 0em;
@@ -585,7 +613,7 @@ $zoom: null;
         display: none;
     }
     
-    > .#{$frontend-prefix}header > .#{$frontend-prefix}navigation {
+    > nav.#{$frontend-prefix}navigation > ul{
         position: fixed;
         bottom: 0px;
         left: 0px;

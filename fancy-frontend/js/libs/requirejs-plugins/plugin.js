@@ -440,11 +440,15 @@ define(function(base){
 
       var structure = config.structure;
         var parts = name.split(':');
-        var app;
+        var app, name, file_name;
         if (parts.length == 1) {
-            name = name;
+            file_name = name = name;
             app = this.getCurrentApp(config);
         }else if (parts.length == 2) {
+            file_name = name = parts[1];
+            app = parts[0];
+        }else if (parts.length == 3) {
+            file_name = parts[2];
             name = parts[1];
             app = parts[0];
         }else{
@@ -452,7 +456,7 @@ define(function(base){
         }
 
       var widget = this.value(name);
-      var file = this.value(name);
+      var file = this.value(file_name);
 
       var path = structure.widget.path
         .replace(/{widget}/g, widget)
@@ -527,7 +531,9 @@ define(function(base){
     resolveTargets: function (config, name){
         var resolvedTarget = {};
         var parts;
-        var requested, plugin, target, fancyPlugin;
+        var requested_target, requested, defaults_to, plugin, target, fancyPlugin;
+        requested = name,
+        defaults_to = this.resolveShortcut(config, requested, false);
 
         parts = name.split('!');
         if (parts.length > 1) {
@@ -540,9 +546,9 @@ define(function(base){
         parts = name.split(':');
         if (parts.length == 2) {
             fancyPlugin = parts[0];
-            requested = parts[1];
-            target = this.resolveShortcut(config, requested);
-            if (target != requested) {
+            requested_target = parts[1];
+            target = this.resolveShortcut(config, requested_target);
+            if (target != requested_target) {
                 _resolvedTarget = this.resolveTargets(config, target);
                 if (_resolvedTarget.fancyPlugin) {
                     target = _resolvedTarget.fancyPlugin + ':' + _resolvedTarget.target;
@@ -550,22 +556,31 @@ define(function(base){
                     target = _resolvedTarget.target;
                 }
                 plugin = _resolvedTarget.plugin;
+            }else if (defaults_to != requested){
+                return this.resolveTargets(config, defaults_to);
             }
 
         }else if(parts.length == 1){
-            requested = name;
-            target = this.resolveShortcut(config, requested);
-            if (target != requested) {
+            requested_target = name;
+            target = this.resolveShortcut(config, requested_target);
+            if (target != requested_target) {
                 _resolvedTarget = this.resolveTargets(config, target);
                 target = _resolvedTarget.target;
                 fancyPlugin = _resolvedTarget.fancyPlugin;
                 plugin = _resolvedTarget.plugin;
+            }else if (defaults_to != requested){
+                return this.resolveTargets(config, defaults_to);
+            }else{
+                fancyPlugin = null
             }
 
 
         }else{  // parts.length > 2
+             if (defaults_to != requested){
+                return this.resolveTargets(config, defaults_to);
+            }
             fancyPlugin = parts[0];
-            requested = parts[parts.length-1];
+            requested_target = parts[parts.length-1];
             target = '';
             for (var i=1; i<parts.length; i++) {
                 target += parts[i] + (i < parts.length-1 ? ':' : '');
@@ -574,7 +589,9 @@ define(function(base){
 
         resolvedTarget.target = target;
         resolvedTarget.fancyPlugin = fancyPlugin;
-        resolvedTarget.requested = requested;
+        //resolvedTarget.requested = requested;
+        //resolvedTarget.defaults_to = defaults_to;  // TODO?
+        resolvedTarget.requested = requested_target
         resolvedTarget.plugin = plugin;
 
         return resolvedTarget;
@@ -597,6 +614,9 @@ define(function(base){
         }
 
         resolvedTarget = this.resolveTargets(config, name);
+        if (resolvedTarget.fancyPlugin === null) {
+            return null
+        }
         target = resolvedTarget.target;
         plugin = resolvedTarget.fancyPlugin;
         if (plugin == 'lib') {
@@ -604,7 +624,6 @@ define(function(base){
         }
 
         result.reqPlugin = resolvedTarget.plugin;
-
         data = this.handlePlugin(config, plugin, target)
         result.reqPath = data.reqPath;
         result.reqPlugin = data.reqPlugin; // TODO: if already set: error
@@ -618,14 +637,20 @@ define(function(base){
         return result
     },
 
-    resolveShortcut: function(config, name){
-        if (config.paths[name] !== undefined) {
+    resolveShortcut: function(config, name, complete){
+        if ((complete !== false) && (config.paths[name] !== undefined)) {
             return config.paths[name];
           }
         if (config.defaults && config.defaults[name] !== undefined) {
             return config.defaults[name];
           }
           return name;  
+    },
+    
+    simple_load: function(name, req, onload, config){
+        require([name], function (value) {
+            onload(value);
+        });
     },
 
     load: function (name, req, onload, config) {
@@ -638,6 +663,9 @@ define(function(base){
         var parseJson = false;
 
         result = this.handleRequest(req, onload, config, name);
+        if (result === null) {
+            return this.simple_load(name, req, onload, config)
+        }
         if (result.reqPlugin == 'json') {
             result.reqPlugin = 'text';
             parseJson = true;
@@ -645,6 +673,15 @@ define(function(base){
         var dep = result.reqPlugin ? (result.reqPlugin +'!'+ result.reqTarget) : result.reqTarget;
         
         if (execute) {
+            var error = function(name, result, e){
+               console.log('(error)', '[fancy-frontend RequirePlugin]', 'loading "', name, '", config:', result.reqConfig, 'dependencies:', [dep]);
+               if (e) {
+                   //console.error(e, e.lineNumber || e.number, e.fileName, e.name, e.message);
+                   console.error(e.stack);
+               }else{
+                   throw e
+               }
+            }
             require(result.reqConfig, [dep], function(value){
                var proceed = function(data){
                    onload(data);
@@ -659,17 +696,9 @@ define(function(base){
                    proceed(value);
                }
               
-            }, function(e){
-               console.log('(error)', '[fancy-frontend RequirePlugin]', 'loading "', name, '", config:', result.reqConfig, 'dependencies:', [dep]);
-               if (e) {
-                   //console.error(e, e.lineNumber || e.number, e.fileName, e.name, e.message);
-                   console.error(e.stack);
-               }else{
-                   throw e
-               }
-           });
+            }, error.bind(null, name, result));
         }else{
-            // return url. this way undef can be used... UGLY! (TODO: find better way?)
+            // return url instead of executing require. this way undef can be used... UGLY! (TODO: find better way?)
             onload(result.reqConfig.paths[""] ? result.reqConfig.paths[""] : result.reqConfig.paths[dep]);
             return result.reqConfig.paths[""] ? result.reqConfig.paths[""] : result.reqConfig.paths[dep]
         }

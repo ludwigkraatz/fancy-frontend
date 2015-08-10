@@ -1,8 +1,12 @@
-define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], function($, config){
-    $(function() {
-        widgetConfig = $[config.apps['fancy-frontend'].defaults_namespace]._widgetConfig;
+define(['fancyPlugin!fancyWidgetCore'], function(fancyWidgetCore){
+    var $ = fancyWidgetCore.$,
+        config = fancyWidgetCore.getFrontendConfig(),
+        widgetConfig = fancyWidgetCore.getWidgetConfig();
 
-       $.widget( config.apps['fancy-frontend'].namespace + '.popup', $[config.apps['fancy-frontend'].defaults_namespace].core, {
+    fancyWidgetCore_popup = fancyWidgetCore.derive('widget', {
+        name: 'popup',
+        namespace: config.apps['fancy-frontend'].namespace,
+        widget: {
                 options: {
                     widget_url: null,
                     iframe_url: null,
@@ -66,8 +70,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         //$popup.css('left', left);
                     });
                     
-                    if (this.options.widgetCore) {
-                        $popup.on('dynamic-notification.dynamic-widget.dynamic-popup', this.options.widgetCore.get_notification_handler(this));
+                    if (this.options.frontend) {
+                        $popup.on('dynamic-notification.dynamic-widget.dynamic-popup', this.options.frontend.get_notification_handler(this));
                     }
                     
                     if (this.options.widget_url) {
@@ -116,10 +120,9 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         $popup.fadeIn(1000);
                     }
                 }
-        });
+        }
+    });
 
-
-    })
-    return $
+    return fancyWidgetCore_popup
 });
     

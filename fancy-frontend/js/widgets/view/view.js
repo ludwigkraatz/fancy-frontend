@@ -1,7 +1,12 @@
-define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], function($, config){
-    $(function() {
+define(['fancyPlugin!fancyWidgetCore'], function(fancyWidgetCore){
+    var $ = fancyWidgetCore.$,
+        config = fancyWidgetCore.getFrontendConfig(),
+        widgetConfig = fancyWidgetCore.getWidgetConfig();
 
-        $.widget( config.apps['fancy-frontend'].namespace + '.view', $[config.apps['fancy-frontend'].namespace].core, { // 
+    fancyWidgetCore_view = fancyWidgetCore.derive('widget', {
+        name: 'view',
+        namespace: config.apps['fancy-frontend'].namespace,
+        widget: { // 
             options: {
                 attached: false,                                // tells whether the view is attached to an widget or standalone
                 limit:  1,                                      // how many active view are allowed
@@ -15,11 +20,16 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }
                 
                 //this._superApply( arguments ); -- dont use cores create method
-                this.$view = null
-                this.views = {}
+                this.$owner = this.options.scope['!private']["$owner"];
+                this.$view = this.$owner || this;
+                this._views = {}
                 this.history = [];
                 this.active = [];
                 this.activeViews = {};
+                
+                if (!this.$owner) {
+                    this.options.attached = false;
+                }
                 
                 this.element.on('popup', this.showViewHandler.bind(this, false, true));
                 this.element.on('show', this.showViewHandler.bind(this, false, false));
@@ -36,9 +46,150 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 }
                 
                 if (!this.options.attached) {
-                    this.element.removeClass(config.frontend_generateClassName('state-initializing'));
+                    //this.element.removeClass(config.frontend_generateClassName('state-initializing'));
+                    this.$view = this;
+                    this._superApply( arguments );
+                    this.use_mixin('view', {view: this.element});
                 }else{
                     this.element.trigger('end-initializing');
+                }
+                if (this.element.data('view-navigation')) {
+                    this.options.navigation = this.element.data('view-navigation')
+                }
+                
+                if (this.options.navigation) {
+                    if (this.options.navigation.full_page) {
+                        this.options.navigation.initial = this.options.navigation.initial || null;
+                    }
+                    this.setupNavigation(this.options.navigation)
+                }
+            },
+            
+            setupChoices: function(choices){
+                    var options = [],
+                        actions = [],
+                        $this = this;
+                    $.each(choices, function(name, config){
+                        if (typeof config == 'string') {
+                            var item = {
+                                id: name,
+                                label_id: config
+                            };
+                            options.push(item)
+                        }else if (config.css_class) {
+                            var item = {
+                                id: name,
+                                css_class: config.css_class
+                            };
+                            if (config.position) {
+                                actions.splice(config.position, 0, item);
+                            }else{
+                                actions.push(item)
+                            }
+                        }else {
+                            throw Error('dont know what to do with choices', config)
+                        }
+                    });
+                    
+                    if (actions.length) {
+                        var $target = $this.$view.mixins.actions.initActionContainer.call($this.$view, $this.$view.$navi)
+                        $.each(actions, function(index, action){
+                            var view_id = action.id;
+                            $this.$view.mixins.actions.addAction.call($this.$view, action, function(){
+                                $this.$view.showView(view_id)
+                                //$this.$view.trigger($this.$view.mixins.view.event_prefix + '-show', [view_id]);
+                            }, $target)
+                        })
+                        $this.$view.mixins.actions.completedActionContainer.call($this.$view);
+                    }
+                    
+                    if (options.length) {
+                        var nav = $this.$view.$navi;
+                        var select = $('<select></select>');
+                        $.each(actions, function(index, elem){
+                            select.append('<option vlaue="' + elem.id + '" translate="'+ elem.label_id +'"></option>')
+                        })
+                        nav.html(select);
+                    }
+            },
+                
+            setupNavigationEntry: function(menu_attr_name, menu, index, translation){
+                this.options.scope[menu_attr_name][index] = {
+                    id: index,
+                    label: translation,
+                    entry: menu[index]
+                };
+            },
+            
+            setupNavigation: function(navigation){
+                var $this = this,
+                    menu = navigation.menu || [],
+                    menu_translation_prefix = '',
+                    menu_attr_name = 'navigation';
+
+                // menu
+                if (menu.length) {
+                    this.options.scope[menu_attr_name] = [];
+                    var initial = parseInt(navigation.initial);
+                    if (isNaN(initial)) {
+                        initial = navigation.initial;
+                        if (typeof initial == 'string') {
+                            for (var index=0; index <= navigation.menu.length; index++){
+                                if (menu[index].view == initial) {
+                                    initial = index;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    $this.$menu = this.$owner.newElement({
+                        css_class: 'navigation',
+                        tag: 'ul',
+                        target: navigation.target || this.$view.$navi,
+                        widget_identifier: 'fancy-frontend.list',
+                        widget_options: {
+                            source: this.options.scope[menu_attr_name],
+                            onSelect: function(elem){
+                                var conf;
+                                if (elem.entry.view) {
+                                    conf = [elem.entry.view, elem.entry.view_config]
+                                }
+                                if (elem.entry.template) {
+                                    conf = ['template', elem.entry]
+                                }
+                                if (elem.entry.widget || elem.entry.plugin) {
+                                    var identifier = elem.entry.widget ||elem.entry.plugin;
+                                    var options = elem.entry.options;
+                                    conf = ['widget', {widget_identifier: identifier, widget_options: options}]
+                                }
+                                $this.$view.showView(conf)
+                                //$this.$view.element.trigger($this.$view.mixins.view.event_prefix + '-show', conf)
+                            },
+                            entryTemplate: '<a href="#" ><span class="'+config.frontend_generateClassName('action')+' '+config.frontend_generateClassName('action-')+'{{ _source.{index}.entry.icon }}"></span><span class="'+config.frontend_generateClassName('title')+'" translate="{{ _source.{index}.label }}"></span></a>',
+                            entryTag: 'li',
+                            inline: true,
+                            size: config.frontend_generateClassName('size-small'),
+                            selected: initial === undefined ? 0 : initial,
+                            view: navigation.view,
+                        }
+                    })
+                    for (var index=0; index < menu.length; index++) {
+                        //$this.translate(menu_translation_prefix + menu[index].translation_identifier,
+                        //                ViewMixin.setupNavigationEntry.bind($this, menu_attr_name, menu, index)
+                        //);
+                        var translation_id = this.$owner.build_translation_id(menu_translation_prefix + menu[index].translation_identifier);
+                        this.setupNavigationEntry.call($this, menu_attr_name, menu, index, translation_id)
+                    }
+                    console.warn('svg in view navi doesnt work always!!')
+                    this.$view.use_mixin('svg', {
+                            watch: true,  // as we don't know when the css might be loaded. TODO: .onInitialized(function(){use_mixin()})
+                        });
+                    this.$view.apply($this.$menu, undefined, true)
+                }
+
+                // choices
+                if (navigation.choices) {
+                    this.setupChoices(navigation.choices);
                 }
             },
             
@@ -48,7 +199,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         page                    // next | previous | A | 1 | 2 | 3.1 | 4.2.1 | ...
             ){
                 event.stopImmediatePropagation();
-                var view = this.views[ currentViewIdentifier ];
+                var view = this._views[ currentViewIdentifier ];
                 view.paginationConfig.showPageHandler(page)
                 var stateActive = config.frontend_generateClassName('state-active');
                 this.$pagination.find('.' + stateActive).removeClass(stateActive);
@@ -59,7 +210,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                                         currentViewIdentifier,  // see showViewHandler
                                         pages                   // next | previous | A | 1 | 2 | 3.1 | 4.2.1 | ...
             ){
-                var view = this.views[ currentViewIdentifier ];
+                var view = this._views[ currentViewIdentifier ];
                 if (typeof pages == 'number') {
                     pages = Array.apply(null, Array(pages)).map(function (_, i) {return i+1;});
                 }
@@ -120,14 +271,24 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
             hash_view: function(name, data){
                 var hash = name;
                 var keys = []
-                for (var key in data) {
-                    if(data.hasOwnProperty(key)){
-                        keys.push(String(key));
+                if ( data && data.asIdentifier) {
+                    hash += ';' + data.asIdentifier()
+                }else{
+                    for (var key in data) {
+                        if(data.hasOwnProperty(key)){
+                            keys.push(String(key));
+                        }
                     }
-                }
-                for (var index in keys.sort()) {
-                    var key = keys[index];
-                    hash += ';' + key + ':' + JSON.stringify(data[key])
+                    for (var index in keys.sort()) {
+                        var key = keys[index];
+                        try {
+                            hash += ';' + key + ':' + (typeof(data[key].asIdentifier) == 'function' ? data[key].asIdentifier() : JSON.stringify(data[key]))
+                        } catch(e) {
+                            throw e
+                            console.log(key, data, e)
+                            console.error('giving Object()  without asIdentifier method shouldnt be done. here is a circular structure. implement a asIdentifier() method')
+                        }
+                    }
                 }
                 return hash
             },
@@ -209,7 +370,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     }
                 }
                 
-                var view = this.views[ currentViewIdentifier ];
+                var view = this._views[ currentViewIdentifier ];
                 if (!popup) {
                     this.history.push(currentViewIdentifier);
                 }
@@ -256,7 +417,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                         
                     }
                     
-                    this.views[ currentViewIdentifier ] = view;
+                    this._views[ currentViewIdentifier ] = view;
                 }
 
                 if (attach) {
@@ -307,9 +468,9 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 if (view === undefined) {
                     for (view in this.activeViews){
                         try {
-                            this.clearViewHandler(remove, event, this.acivteViews[view])
+                            this.clearViewHandler(remove, event, this.activeViews[view])
                         } catch(e) {
-                            this.log('(error)', 'Couldnt clear view', view, e);
+                            this.log('(error)', 'Couldnt clear view', view, e, e.stack, e.message);
                         }
                     }
                     return false
@@ -340,7 +501,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     // if the original wants to be clean by default
                     //   it should trigger the replace event
                     if (initialViewIdentifier !== viewIdentifier){
-                        this.views[ viewIdentifier ] = view;
+                        this._views[ viewIdentifier ] = view;
                     }
                     for (element in view.elements){
                         view.elements[element].detach();
@@ -361,9 +522,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                 
                 return false
             }
-        });
+        }
+    });
 
-
-    })
-    return $
+    return fancyWidgetCore_view
 });

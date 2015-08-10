@@ -1,20 +1,27 @@
-define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], function($, config){
-    $(function() {
-        var views = $[config.apps['fancy-frontend'].namespace]._widgetConfig.views;
+define(['fancyPlugin!fancyWidgetCore'], function(fancyWidgetCore){
+    var $ = fancyWidgetCore.$,
+        config = fancyWidgetCore.getFrontendConfig(),
+        widgetConfig = fancyWidgetCore.getWidgetConfig(),
+        views= widgetConfig.views;
 
-        $.widget( config.apps['fancy-frontend'].namespace + '.resource_interface', $[config.apps['fancy-frontend'].namespace].core, {
+    fancyWidgetCore_resource = fancyWidgetCore.derive('widget', {
+        name: 'resource_interface',
+        namespace: config.apps['fancy-frontend'].namespace,
+        widget: {
+            //defaultView: 'loading'
             _create: function(){          
                 this.use_mixin('view');
-                this.use_mixin('resource');
+                this.use_mixin('preprocessor');
+                //this.use_mixin('resource');
                 this._superApply( arguments );
             },
-            views: $.extend({}, $[config.apps['fancy-frontend'].namespace].core.views, {
+            views: {
                 list: views.ListView,
                 create: views.CreateView,
                 edit: views.EditView,
                 detail: views.DetailView
-            }),
-            setDefaultView: function(){
+            },
+            setDefaultView2: function(){
                 if ((this.options.activeView == 'detail') || (!this.options.activeView && this.options.scope['__resourceTarget'] == 'uuid')) {
                     this.log('(view)', 'found detail view')
                     this.trigger(this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['detail']);
@@ -27,9 +34,8 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig'], funct
                     return false
                 }
             }
-        });
+        }
+    });
 
-
-    })
-    return $
+    return fancyWidgetCore_resource
 });

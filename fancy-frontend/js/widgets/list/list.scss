@@ -10,7 +10,7 @@
     .#{$frontend-prefix}interactive-tree.#{$frontend-prefix}icon {
         @include iconMixin_add;
         margin: 3px 0 0 -13px;
-        position: absolute;
+        /*position: absolute;*/
     }
     .#{$frontend-prefix}interactive-tree.#{$frontend-prefix}icon.#{$frontend-prefix}state-extended {
         @include iconMixin_minus;

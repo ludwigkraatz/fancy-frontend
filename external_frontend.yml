@@ -1,0 +1,38 @@
+requirejs:
+    paths:
+        "introspective-api-client": "js/libs/introspective_api/client"
+        "introspective-api-auth": "js/libs/introspective_api/auth"
+        "introspective-api-resources": "js/libs/introspective_api/resources"
+        "introspective-api-cache": "js/libs/introspective_api/cache"
+        "introspective-api-views": "js/libs/introspective_api/views"
+        "introspective-api-handles": "js/libs/introspective_api/handles"
+        "introspective-api-hosts--original": "js/libs/introspective_api/hosts"
+        "introspective-api-hosts": "fancyPlugin!app:fancy-frontend:hosts"
+        "introspective-api-log": "js/libs/introspective_api/log"
+        
+        "fancyWidgetMixins": "fancyPlugin!app:fancy-frontend:widgetMixins"
+        "fancyWidgetViews": "fancyPlugin!app:fancy-frontend:widgetViews"
+        "fancyScopeCore": "TODO:dummy"
+
+        "fancyFrontendCore": "fancyPlugin!widget:fancy-frontend:frontend"
+        "fancyFrontendConfig": "fancyPlugin!widget:fancy-frontend:frontend:config"
+        "fancyFrontendConfiguration": "fancyPlugin!widget:fancy-frontend:frontend:configuration"
+        "fancyFrontendConfigFile": "fancyPlugin!widget:fancy-frontend:frontend:defaultConfig.json"
+
+        "fancyAjax": "fancyPlugin!widget:fancy-frontend:ajax:ajax_lib"
+
+unversioned:
+    #- ^[\./]{0,2}main.js
+    - ^[\./]{0,2}require.js
+    - ^[\./]{0,2}json2.js
+    - ^[\./]{0,2}require-text.js
+    - ^/img/
+    - ^/requirejs/plugins/
+    - ^.*/requirejs-plugins/
+collect:
+    /requirejs-plugins/: lib:requirejs/plugins/
+staging:
+    configurations:
+        debug:
+            exclusive_files:
+                - ./fixtures/

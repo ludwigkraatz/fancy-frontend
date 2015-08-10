@@ -6,79 +6,181 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         var ViewMixin = {
                 event_prefix: 'fancy-frontend-ViewMixin',
                 init: function(mixinConfig){
-                    var $this = this;
+                    var $this = this,
+                        $view;
+                        
+                    this._ignored_options.push('defaultView');
+                    this._ignored_options.push('activeView');
+                    
+                    if (mixinConfig.data.full_page) {
+                        // TODO: using this.element would also bubble up..
+                        $view = this.element.closest('.' + config.frontend_generateClassName('object-view'));
+                        if ($view.size() == 0) {
+                            $view = this.element;
+                        }
+                    }else{
+                        $view = this.element;
+                    }
+                    mixinConfig.view = $view;
+                    mixinConfig.viewEventTarget = this.element;
+                    mixinConfig.data.use_breadcrumb = mixinConfig.data.use_breadcrumb === undefined ? false : mixinConfig.data.use_breadcrumb;
+                    mixinConfig.breadcrumbs = [];
+                    
+                    if (!this.showView) {
+                        this.showView = ViewMixin.showView.bind(this, mixinConfig.viewEventTarget)
+                    }
+                    if (!this.closeView) {
+                        this.closeView = ViewMixin.closeView.bind(this, mixinConfig)
+                    }
                     
                     if (mixinConfig.data.views) {
                         this.views = $.extend({}, this.views, mixinConfig.data.views);          // make sure changes are just for this instance
                     }
+                    if (mixinConfig.data.navigation) {
+                        $.each(mixinConfig.data.navigation.choices || [], function(name, config){
+                            if (config.view){
+                                $this.views[name] = config.view;
+                            }
+                        })
+                        //$.each(mixinConfig.data.navigation.menu || [], function(index, config){
+                        //    if (config.view){
+                        //        $this.views[name] = config.view;
+                        //    }
+                        //})
+                    }
                     //this.addView = ViewMixin.addView.bind(this);
                     
                     mixinConfig.elements = mixinConfig.data.elements || ['body'];
+                    if (mixinConfig.data.full_page) {
+                        mixinConfig.data.lazy = false;
+                    }
+                    if (!mixinConfig.viewEventTarget.hasClass(config.frontend_generateClassName('object-view'))) {
+                        mixinConfig.viewEventTarget.addClass(config.frontend_generateClassName('object-view'))
+                    }
                     ViewMixin.setupLazyView.call($this, mixinConfig); 
+                    
                     this.setupMixinHandlers(ViewMixin.event_prefix, this.views);                    
-                    if (mixinConfig.data.navigation) {
+                    if (mixinConfig.data.navigation && false) {
                         ViewMixin.setupNavigation.call($this, mixinConfig.data.navigation);
                         this.on('init-widget-structure-done.header init-widget-structure-done.footer', function(event){
                             ViewMixin.setupNavigation.call($this, mixinConfig.data.navigation);
                         })
+                    }                   
+                    if (mixinConfig.data.choices && false) {
+                        ViewMixin.setupChoices.call($this, mixinConfig.data.choices);
+                        //this.on('init-widget-structure-done.header init-widget-structure-done.footer', function(event){
+                        //    ViewMixin.setupChoices.call($this, mixinConfig.data.choices);
+                        //})
                     }
                     
-                    // init active view
-                    if ($this.options.defaultView) {
-                        $this.trigger(ViewMixin.event_prefix + '-show', [$this.options.defaultView]);
+                    ViewMixin.finalizeInit.call($this, mixinConfig)
+                },
+                
+                showView: function(target, view, config, local){
+                    if (local === undefined) {
+                        local = true;
+                    }
+                    if (Array.isArray(view)) {
+                        config = view[1];
+                        view = view[0];
+                    }
+                    if (config) {
+                        //throw Error('TODO: is config arg for .showView() implemented??')
+                    }
+                    if (local && this[view + 'View']) {
+                        this.initWidgetStructure(undefined, true);
+                        if (!this[view + 'View'](config)){
+                            this.apply(undefined, undefined, true)
+                            return true
+                        }
+                    }
+                    var ret = target.trigger(ViewMixin.event_prefix + '-show', [view, config]);
+                    
+                    if (local && this['post_' + view + 'View']) {
+                        this['post_' + view + 'View'](config)
+                    }
+                    this.apply(undefined, undefined, true)
+                    return ret
+                },
+                
+                closeView: function(mixinConfig){
+                    var target = mixinConfig.viewEventTarget,
+                        closed_view = mixinConfig.breadcrumbs.pop();
+                        ret = target.trigger(ViewMixin.event_prefix + '-remove', [closed_view[0]]);
+                    if (mixinConfig.breadcrumbs.length) {
+                        last_view = mixinConfig.breadcrumbs[mixinConfig.breadcrumbs.length -1];
+                        this.showView(last_view[0], last_view[1]);
                     }else{
-                        if ($this.setDefaultView) {
-                            $this.setDefaultView()
+                        this.destroy()
+                    }
+                },
+                
+                finalizeInit: function(mixinConfig){
+                    var $this = this;
+                    // init active view
+                    if (mixinConfig.data.show){
+                        //this.showView(mixinConfig.data.show);
+                    }else if (!$this.options.activeView) {
+                        if ($this.options.defaultView) {
+                            this.option('activeView', this.options.defaultView);
+                            //this.showView($this.options.defaultView)
                         }else{
-                            if (ViewMixin.setDefaultView.call($this) === false){
+                            if ($this.setDefaultView) {
                                 $this.setDefaultView()
+                            }else{
+                                if (ViewMixin.setDefaultView.call($this) === false){
+                                    $this.setDefaultView()
+                                }
                             }
                         }
                     }
+                    
                 },
                 
                 
-                setupNavigationEntry: function(menu_attr_name, menu, index, translation){
-                    this.options.scope[menu_attr_name][index] = {
-                        id: index,
-                        label: translation,
-                        entry: menu[index]
-                    };
-                },
-                
-                setupNavigation: function(navigation){
-                    var $this = this,
-                        menu = navigation.menu || [],
-                        menu_translation_prefix = '',
-                        menu_attr_name = 'navigation';
-                    if (menu.length) {
-                        this.options.scope[menu_attr_name] = [];
-                        $this.$menu = this.newElement({
-                            css_class: 'navigation',
-                            tag: 'ul',
-                            widget_identifier: 'fancy-frontend.list',
-                            widget_options: {
-                                source: this.options.scope[menu_attr_name],
-                                onSelect: function(elem){
-                                    $this.element.trigger(ViewMixin.event_prefix + '-show', ['widget', elem.entry])
-                                },
-                                entryTemplate: '<a href="#" ><span class="'+config.frontend_generateClassName('action')+' '+config.frontend_generateClassName('action-')+'{{ _source.{index}.entry.icon }}"></span><span class="'+config.frontend_generateClassName('title')+'" translate="{{ _source.{index}.label }}"></span></a>',
-                                entryTag: 'li',
-                                inline: true,
-                                size: config.frontend_generateClassName('size-small'),
-                                selectFirst: true,
-                                view: navigation.view,
-                            },
-                            target: navigation.target || $(this.$header, this.$footer),
-                        })
-                        for (var index=0; index < menu.length; index++) {
-                            //$this.translate(menu_translation_prefix + menu[index].translation_identifier,
-                            //                ViewMixin.setupNavigationEntry.bind($this, menu_attr_name, menu, index)
-                            //);
-                            ViewMixin.setupNavigationEntry.call($this, menu_attr_name, menu, index, menu_translation_prefix + menu[index].translation_identifier)
-                        }
-                    }
-                },
+                //
+                //setupNavigationEntry: function(menu_attr_name, menu, index, translation){
+                //    this.options.scope[menu_attr_name][index] = {
+                //        id: index,
+                //        label: translation,
+                //        entry: menu[index]
+                //    };
+                //},
+                //
+                //setupNavigation: function(navigation){
+                //    var $this = this,
+                //        menu = navigation.menu || [],
+                //        menu_translation_prefix = '',
+                //        menu_attr_name = 'navigation';
+                //    if (menu.length) {
+                //        this.options.scope[menu_attr_name] = [];
+                //        $this.$menu = this.newElement({
+                //            css_class: 'navigation',
+                //            tag: 'ul',
+                //            widget_identifier: 'fancy-frontend.list',
+                //            widget_options: {
+                //                source: this.options.scope[menu_attr_name],
+                //                onSelect: function(elem){
+                //                    $this.element.trigger(ViewMixin.event_prefix + '-show', ['widget', elem.entry])
+                //                },
+                //                entryTemplate: '<a href="#" ><span class="'+config.frontend_generateClassName('action')+' '+config.frontend_generateClassName('action-')+'{{ _source.{index}.entry.icon }}"></span><span class="'+config.frontend_generateClassName('title')+'" translate="{{ _source.{index}.label }}"></span></a>',
+                //                entryTag: 'li',
+                //                inline: true,
+                //                size: config.frontend_generateClassName('size-small'),
+                //                selectFirst: navigation.full_page ? false : true,
+                //                view: navigation.view,
+                //            },
+                //            target: navigation.target || $(this.$header, this.$footer),
+                //        })
+                //        for (var index=0; index < menu.length; index++) {
+                //            //$this.translate(menu_translation_prefix + menu[index].translation_identifier,
+                //            //                ViewMixin.setupNavigationEntry.bind($this, menu_attr_name, menu, index)
+                //            //);
+                //            var translation_id = this.build_translation_id(menu_translation_prefix + menu[index].translation_identifier);
+                //            ViewMixin.setupNavigationEntry.call($this, menu_attr_name, menu, index, translation_id)
+                //        }
+                //    }
+                //},
                 
                 addView: function(name, view){
                     this.views[name] = view;
@@ -87,7 +189,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
 
                 setDefaultView: function(){
                     if (this.options.activeView) {
-                        this.trigger(this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', [this.options.activeView]);
+                        //this.showView(this.options.activeView);
+                        //this.trigger(this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', [this.options.activeView]);
                     }else {
                         this.log('no active view defined')
                     }
@@ -96,12 +199,12 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                 setupViewWidget: function(mixinConfig, $view){
                     var $this = this;
                     
-                    this.element.off(ViewMixin.event_prefix + '-popup');
-                    this.element.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
+                    mixinConfig.viewEventTarget.off(ViewMixin.event_prefix + '-popup');
+                    mixinConfig.viewEventTarget.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
-                        $this.options.scope.log.debug('show popup:', mixinConfig._activeView_package);
+                        $this.log('show popup:', mixinConfig._activeView_package);
                         
-                        $view.trigger('popup', [
+                        mixinConfig.view.triggerHandler('popup', [
                                                name, //$this.generateStateIdentifier.bind($this),
                                                data,
                                                $this.initWidgetStructure.bind($this, mixinConfig.elements),
@@ -124,39 +227,56 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                         )
                         
                     });
-                    this.element.off(ViewMixin.event_prefix + '-show');
-                    this.element.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
+                    mixinConfig.viewEventTarget.off(ViewMixin.event_prefix + '-show');
+                    mixinConfig.viewEventTarget.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
                         mixinConfig._activeView_package = [name, data];
-                        $this.options.scope.log.debug('show view:', mixinConfig._activeView_package);
-                        
-                        $view.trigger('show', [
-                                               mixinConfig._activeView_package[0], //$this.generateStateIdentifier.bind($this),
-                                               mixinConfig._activeView_package[1],
-                                               $this.initWidgetStructure.bind($this, mixinConfig.elements),
-                                               function(newElements){
-                                                    
-                                                }, function(){
-                                                    $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
-                                                },
-                                                true
-                                            ]
+                        $this.log('(fancy-frontend)', '(widgetMixins)', '(view)', 'show view:', mixinConfig._activeView_package);
+                        mixinConfig.breadcrumbs.push(mixinConfig._activeView_package);
+                        mixinConfig.view.triggerHandler('show', [
+                            ViewMixin.generateViewArgs.call($this,
+                                                       mixinConfig,
+                                                       mixinConfig._activeView_package[0],
+                                                       mixinConfig._activeView_package[1]
+                            )]
                         )
                         
                     });
                 },
                 
+                generateViewArgs: function(mixinConfig, name, config){
+                    var $this = this;
+                    return {
+                                name: name, //$this.generateStateIdentifier.bind($this),
+                                data: config,
+                                elements: $this.initWidgetStructure.bind($this, mixinConfig.elements),
+                                setContent: function(newElements){
+                                     
+                                 },
+                                reloadContent: function(){
+                                     $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
+                                 },
+                                cache: true,
+                                paginationConfig: undefined
+                    }
+                },
+                
                 runViewWidget: function(mixinConfig, elements, showNewView, popup){
                     var $this = this;
-                    ViewMixin.setupViewWidget.call($this, mixinConfig, $this.element);
-                    this.options.widgetCore.create_plugin(
-                                    this.element,
+                    ViewMixin.setupViewWidget.call($this, mixinConfig);
+                    
+                    if (mixinConfig.view != this.element) {
+                        return
+                    }
+                    
+                    (this.options.frontend ? this.options.frontend : this).create_plugin(
+                                    mixinConfig.view,
                                     'fancy-frontend.view',
                                     {
                                         attached: true,
                                         initView: {
-                                            name: mixinConfig._activeView_package ? mixinConfig._activeView_package[0] : null, //this.generateStateIdentifier.bind(this),
-                                            data: mixinConfig._activeView_package ? mixinConfig._activeView_package[1] : null,
+                                            name: mixinConfig._activeView_package ? mixinConfig._activeView_package[0] : (mixinConfig.data.show && mixinConfig.data.show[0]), //this.generateStateIdentifier.bind(this),
+                                            data: mixinConfig._activeView_package ? mixinConfig._activeView_package[1] : (mixinConfig.data.show && mixinConfig.data.show[1]),
                                             elements: elements,
                                             setContent: function(newElements){
                                                 
@@ -165,6 +285,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                                             cache: true,
                                             popup: popup
                                         },
+                                        navigation: mixinConfig.data.navigation
                                     }
                     )
                     // setup view infrastructure
@@ -173,37 +294,48 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                 
                 setupLazyView: function (mixinConfig){
                     var $this = this;
-                    
-                    this.element.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
-                        event.stopPropagation();
-                        
-                        elements = $this.initWidgetStructure.bind($this, mixinConfig.elements, false);//mixinConfig._activeView_package ? true : false);
-                        
-                        ViewMixin.runViewWidget.call($this, mixinConfig,
-                                                elements,
-                                                function(){ 
-                                                   $this.trigger(ViewMixin.event_prefix + '-popup', [name, data]);
-                                                   
-                                            },
-                                            true
-                                          );
-                    });
-                    
-                    this.element.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
-                        event.stopPropagation();
-                        $this.options.scope.log.debug('show view initial:', name, data);
-                        //if (mixinConfig.hasOwnProperty('_activeView_package') && mixinConfig._activeView_package) {
+                    if (mixinConfig.data.lazy !== false){//(!mixinConfig.data.navigation || mixinConfig.data.lazy === true) && (mixinConfig.data.lazy !== false)){
+                        mixinConfig.viewEventTarget.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
+                            event.stopPropagation();
+                            
+                            elements = $this.initWidgetStructure.bind($this, mixinConfig.elements, false);//mixinConfig._activeView_package ? true : false);
+                            
                             ViewMixin.runViewWidget.call($this, mixinConfig,
-                                                $this.initWidgetStructure.bind($this, mixinConfig.elements, false),
-                                                function(){ 
-                                                   $this.trigger(ViewMixin.event_prefix + '-show', [name, data]);
-                                                }
+                                                    elements,
+                                                    function(){ 
+                                                       $this.trigger(ViewMixin.event_prefix + '-popup', [name, data]);
+                                                       
+                                                },
+                                                true
                                               );
-                        //}else{
-                        //    mixinConfig._activeView_package = [name, data];
-                        //    $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
-                        //}
-                    });
+                        });
+                        
+                        mixinConfig.viewEventTarget.on(ViewMixin.event_prefix + '-show', function MixinCreateHandler(event, name, data){
+                            event.stopPropagation();
+                            $this.log('show view initial:', name, data);
+                            //if (mixinConfig.hasOwnProperty('_activeView_package') && mixinConfig._activeView_package) {
+                                ViewMixin.runViewWidget.call($this, mixinConfig,
+                                                    $this.initWidgetStructure.bind($this, mixinConfig.elements, false),
+                                                    function(){ 
+                                                       $this.showView(name, data);//trigger(ViewMixin.event_prefix + '-show', [name, data]);
+                                                    }
+                                                  );
+                            //}else{
+                            //    mixinConfig._activeView_package = [name, data];
+                            //    $this.trigger(ViewMixin.event_prefix + '-found', mixinConfig._activeView_package);
+                            //}
+                        });
+                    }else{
+                        ViewMixin.runViewWidget.call($this, mixinConfig,
+                                                    $this.initWidgetStructure.bind($this, mixinConfig.elements, false),
+                                                    function(){
+                                                        if (mixinConfig.data.show) {
+                                                            $this.showView(mixinConfig.data.show);
+                                                        }
+                                                    }
+                                                  );
+                    }
+                    
                 },
                 
                 /*
@@ -237,7 +369,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     
                     this.on(ViewMixin.event_prefix + '-popup', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
-                        $this.options.scope.log.debug('popup view:', name);
+                        $this.log('popup view:', name);
                         activeBody = $this.$body;
                         if (typeof data === 'function') {
                             var callback = data;
@@ -259,7 +391,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     
                     this.element.on(ViewMixin.event_prefix + '-show.dynamic-widget.dynamic-dynamicet-widget', function MixinCreateHandler(event, name, data){
                         event.stopPropagation();
-                        $this.options.scope.log.debug('show view:', name, data);
+                        $this.log('show view:', name, data);
                         $this._$body.find('[data-active=true]').removeAttr('data-active');
                         // TODO: show loading
                         setViewBody(name, data);
@@ -293,7 +425,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             init: function(mixinConfig){
                 var $this = this;
                 var target = mixinConfig.data.target || (this.$header || this.$footer)
-                var $navigation = $('<div></div>').addClass(config.frontend_generateClassName('tag-navigation'));
+                var $navigation = $('<nav></nav>').addClass(config.frontend_generateClassName('tag-navigation'));
                 this.element.data('$TagNavigationTarget', target);
                 this.element.data('$TagNavigation', $navigation);
                 this.element.data('TagNavigationTags', []);
@@ -389,15 +521,27 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
 
         var NotificationMixin = {
             init: function(mixinConfig){
-                this.element.on('dynamic-notification.dynamic-widget.dynamic-dynamicet-widget', this.options.widgetCore.get_notification_handler(this));
+                this.element.on('dynamic-notification.dynamic-widget.dynamic-dynamicet-widget', (this.options.frontend ? this.options.frontend : this).get_notification_handler(this));
+            },
+            
+            notify: function(){
+                this.element.trigger(config.frontend_generateEventName('notification') + config.frontend_generateEventSelector('global-handler'), this.get_notification_handler(this));
+            },
+            
+            warning: function(){
+                this.element.trigger(config.frontend_generateEventName('notification') + config.frontend_generateEventSelector('global-handler'), this.get_notification_handler(this));
             }
         }
         
         var ApiMixin = {
             init: function(mixinConfig){
-                this.api = {};
-                this.api.object = this.options.scope.object;
-                this.api.get = ApiMixin._getApiAccess.bind(this);
+                var config = mixinConfig.data.config || {};
+                
+                config.host = this.getHost();
+                config.auth = this.getAuth();
+                config.log = this.getLog();
+                
+                this.api = new this.handles.ApiHandle(config)
             },
             
             _getApiAccess: function(){
@@ -408,15 +552,24 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         
         var OSMixin = {
             init: function(mixinConfig){
+                var $this = this;
+                OSMixin.setup.call($this, mixinConfig);
                 this.on('init-widget-structure-done.header', function(event){
-                    var $settingsBtn = this.newElement({
-                        plugin_identifier: 'fancy-frontend.os?',
-                        view: '',
-                        icon: 'os',
-                        target: this.$header
-                    });
+                    OSMixin.setup.call($this, mixinConfig);
                 })
             },
+            
+            setup: function(mixinConfig){
+                var $settingsBtn = this.newElement({
+                    plugin_identifier: 'fancy-frontend.os?',
+                    plugin_options: {
+                        owner: this
+                    },
+                    view: '',
+                    icon: 'os',
+                    target: this.$header
+                });
+            }
         }
         mixins.OSMixin = OSMixin;
         
@@ -424,69 +577,169 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             init: function(mixinConfig){
                 var $this = this,
                     selector = (mixinConfig.data ? mixinConfig.data.selector : null) || ('.' + config.frontend_generateClassName('action'));
-                
-                this.element.addClass(config.frontend_generateClassName('fancyFrontendMixin-SVGInspector'));
-                this.on('init-widget-structure-done.header init-widget-structure-done.body init-widget-structure-done.footer',  function(event){
-                    $.each($this.element.find(selector), function (index, element){
-                        var $elem = $(element),
-                            background_image = $elem.css('background-image'),
-                            url_pattern = background_image.split('url('),
-                            backgorund_url = url_pattern.length > 1 ? url_pattern[1].slice(0,-1) : url_pattern[0];
-                        if (backgorund_url != 'none') {
-                            $elem.css('background-image', 'none')
-                            $elem.attr('data-src', backgorund_url)
-                            require(['fancyPlugin!lib:SVGInjector/svg-injector.min'], function(SVGInjector){
-                                SVGInjector(element);
-                            })
-                        }
-                    });
+
+                $this.element.addClass(config.frontend_generateClassName('fancyFrontendMixin-SVGInspector'));
+                require(['fancyPlugin!lib:SVGInjector/svg-injector.min'], function(SVGInjector){
+                    SVGInjectorMixin.inject.call($this, selector);
+
+                    if (mixinConfig.data.watch !== false) {
+                        $this.on('init-widget-structure-done init-widget-structure-done.header init-widget-structure-done.navi init-widget-structure-done.body init-widget-structure-done.footer asset-loaded.css',  function(event){
+                            SVGInjectorMixin.inject.call($this, selector, $(event.target));
+                            $this.log('(fancy-frontend)', '(widgetMixins)', '(SVGInjector)', ' - svg', $this, selector, event.target)
+                        })
+                        $this.executeOnApply(function(){
+                            SVGInjectorMixin.inject.call($this, selector);
+                            $this.log('(fancy-frontend)', '(widgetMixins)', '(SVGInjector)', ' + svg', $this, selector, event.target)
+                        }, true)
+                    }else{
+                        $this.executeOnApply(function(event){
+                            SVGInjectorMixin.inject.call($this, selector);
+                        })
+                    }
                 })
             },
+            
+            inject: function(selector, $target){
+                var $this = this;
+                $.each(($target || $this.element).find(selector), function (index, element){
+                    var $elem = $(element),
+                        background_image = $elem.css('background-image'),
+                        url_pattern = background_image.split('url('),
+                        backgorund_url = url_pattern.length > 1 ? url_pattern[1].slice(0,-1) : url_pattern[0];
+                    if (backgorund_url && backgorund_url != 'none') {
+                        $elem.css('background-image', 'none')
+                        $elem.attr('data-src', backgorund_url)
+                        var events = $._data($elem[0], 'events');
+                        SVGInjector = require('fancyPlugin!lib:SVGInjector/svg-injector.min');
+                        SVGInjector(element, events ? {each: function(svg){
+                            $.each(events, function(event, callbacks){
+                                $.each(callbacks, function(index, callback){
+                                    $(svg).on(event, callback)
+                                })
+                            })
+                        }} : null);
+                    }//console.log($target, element, background_image);
+                });
+            }
         }
         mixins.SVGInjectorMixin = SVGInjectorMixin;
         
         var ActionsMixin = {
             init: function(mixinConfig){
-                var $this = this;
                 var $target = mixinConfig.data.target || this.$footer;
-                var discover = mixinConfig.data.discover || true;
-                if ($target.find('.' + config.frontend_generateClassName('actions')).size() == 0) {
-                    $target.append($('<div></div>').addClass(config.frontend_generateClassName('actions')))
+
+                if ($target && $target.size()) {
+                    ActionsMixin.initializeActionMixin.call(this, mixinConfig, $target)
+                }else{
+                    this.on('init-widget-structure-done.footer', function(){
+                        ActionsMixin.initializeActionMixin.call(this, mixinConfig, this.$footer)
+                    }.bind(this))
                 }
-                $target = $target.find('.' + config.frontend_generateClassName('actions'));
-                this.element.data('fancy-frontend.mixins.ActionMixin.$target', $target);
-                if (discover && this.options.resource && !this.options.resource.isBlank()) {
-                    this.options.resource.discover(function(result){
+                
+            },
+
+            initializeActionMixin: function(mixinConfig, $target){
+                mixinConfig.$target = ActionsMixin.initActionContainer.call(this, $target);
+                if (!this.element.data('fancy-frontend.mixins.ActionMixin.$target')){
+                    this.element.data('fancy-frontend.mixins.ActionMixin.$target', mixinConfig.$target);
+                }
+                
+                this.on_refresh('source', ActionsMixin.onRefresh.bind(this, mixinConfig))
+            },
+            
+            onRefresh: function(mixinConfig){
+                var $this = this,
+                    discover = mixinConfig.data.discover !== undefined ? mixinConfig.data.discover : true,
+                    resource = (this.options.source && typeof(this.options.source.getResource) == 'function') ? this.options.source.getResource() : this.options.resource || this.options.source,
+                    $target = mixinConfig.$target;
+
+                ActionsMixin.cleanActionContainer.call(this, mixinConfig);
+
+                if (discover && resource && !resource.isBlank()) {
+                    resource.discover(function(result){
                         var actions = result.getResponse()['actions'];
                         if (actions) {
                             $this.log('(fancy-frontend)', '(mixin)', '(actions)', 'found actions', actions);
                             for (var action in actions){
                                 if (action.toUpperCase() == action) {
                                     // skip UppderCase Actions, as POST and PUT
+                                    if (action == 'DELETE') {
+                                        ActionsMixin.addAction.call($this, {label: action, css_class: 'action-delete'}, function(){
+                                            resource.destroy();
+                                            this.destroy()
+                                        }.bind(this), $target)
+                                    }
+                                    if (action == 'POST' && false) {
+                                        ActionsMixin.addAction.call($this, {label: action, css_class: 'action-add'}, function(){
+                                            throw Error('TODO: create')
+                                        }, $target)
+                                    }
+                                    if (['PATCH', 'PUT'].indexOf(action) != -1) {
+                                        ActionsMixin.addAction.call($this, {label: action, css_class: 'action-edit'}, function(){
+                                            this.showView('edit')
+                                        }.bind(this), $target)
+                                    }
                                     continue
                                 }
+                                var act = action;
                                 ActionsMixin.addAction.call($this, action, function(){
-                                    $this.options.resource.execute(action)
-                                })
+                                    resource.execute(act)
+                                }, $target)
                             }
                         }
-                    })
+                    }.bind(this))
                 }
+                
+                ActionsMixin.completedActionContainer.call($this);
             },
             
-            addAction: function(action, handler){
-                var $this = this,
-                    action_trigger = $('<div></div>');
+            cleanActionContainer: function(mixinConfig) {
+                var $target = mixinConfig ? mixinConfig.$target : this.element.data('fancy-frontend.mixins.ActionMixin.$target');
+                $target.children('.' + config.frontend_generateClassName('action')).remove();
+            },
+            
+            
+            completedActionContainer: function() {
+                this.trigger('init-widget-structure-done.navi');
+            },
+            
+            initActionContainer: function($target, tag){
+                var $actions, $container,
+                    selector = (tag || '') + '.' + config.frontend_generateClassName('actions');
+
+                if ($target.find(selector).size() != 0) {
+                    $actions = $target.find(selector).first()
+                }else{
+                    $actions = $('<ul></ul>').addClass(config.frontend_generateClassName('actions'));
+                    $container = tag ? $('<'+tag+'></'+tag+'>').html($actions) : $actions;
+                    $target.append($container);
+                }
+                return $actions
+            },
+            
+            addAction: function(action, handler, $target){
+                var $this = this;
+                var action_trigger = $this.newElement({
+                        apply_to: $target,
+                        css_class: action.css_class
+                    });
                 action_trigger.addClass(config.frontend_generateClassName('action'))
-                action_trigger.html(action);
-                action_trigger.click(handler)
-                this.element.data('fancy-frontend.mixins.ActionMixin.$target').append(action_trigger)
+                if (typeof action == 'string') {
+                    action_trigger.html(action);
+                }else if (typeof action == 'object' && action.label) {
+                    action_trigger.attr('title', action.label);
+                }
+                action_trigger.click(function(event){
+                    event.stopImmediatePropagation();
+                    event.preventDefault();
+                    handler(event)
+                })
             }
         }
         mixins.ActionsMixin = ActionsMixin;
 
         var _AttrMixin = {
-            init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships){
+            init: function(mixinConfig, name, initialValue, attrReference, asPrimary, defaultRelationships, options){
                 var $this = this;
                 initialValue = initialValue !== undefined ? initialValue : mixinConfig.data.initialValue;
                 
@@ -494,7 +747,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     mixinConfig.data.autoSave = mixinConfig.data.autoSave ? [mixinConfig.data.autoSave] : false
                 }
                 
-                this.options.scope._prepareAttr(name, initialValue, attrReference, asPrimary)
+                this.options.scope._prepareAttr(name, initialValue, attrReference, asPrimary, options)
                 
                 var accessables = [name, name +'List'];
                 for (var index in accessables) {
@@ -549,15 +802,17 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
         mixins._AttrMixin = _AttrMixin;
 
         var ResourceMixin = {
-            init: function(mixinConfig, initialValue, asPrimary, defaultRelationships){
+            init: function(mixinConfig, initialValue, asPrimary, defaultRelationships, options){
                 var $this = this;
                 
                 this.options.scope.$watch('__resourceAsNew', function(val, oldVal){
                     if (val) {
-                        $this.trigger($this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['create']);
+                        $this.showView('create')
+                        //$this.trigger($this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['create']);
                     }else{
                         if (oldVal) { // TODO: show 'default'
-                            $this.trigger($this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['detail']);
+                            $this.showView('detail')
+                            //$this.trigger($this._widgetConfig.mixins.ViewMixin.event_prefix + '-show', ['detail']);
                         }
                     }
                 })
@@ -568,7 +823,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                                      initialValue,
                                      this.options.scope.__widgetReference,
                                      asPrimary,
-                                     defaultRelationships
+                                     defaultRelationships,
+                                     options
                                      )
                 
                         
@@ -579,18 +835,222 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             
         };
         mixins.ResourceMixin = ResourceMixin;
+
+        var PreprocessorMixin = {
+            init: function(mixinConfig){
+                var $this = this,
+                    state = {};
+                var init = mixinConfig.data.init;
+                var config = mixinConfig.data.config || {},
+                    proxy = config.proxy;
+                var target = mixinConfig.data.option,
+                    handle_class = mixinConfig.data.handle || this.handles.ApiHandle;
+                
+                config.host = this.getHost();
+                config.auth = this.getAuth();
+                config.log = this.getLog();
+                config.source = this;
+                
+                if (!init) {
+                    init = {};
+                }
+
+                init.refreshHandler = function(target, config){
+                    var handled = false;
+                    if (config){
+                        if (config.view) {
+                            if (config.source) {
+                                this.option(target, config.source)
+                            }
+                            handled = true;
+                            var view = config.view;
+                            delete config.view;
+                            if (!this.showView) {
+                                this.log('(fancy-frontend)', '(widgetMixins)', '(preprocessor)', 'require mixin view for preprocessor mixin')
+                                
+                                this.require_mixin('view', {lazy: false, show: [view, config]});
+                            }else{
+                                this.showView(view, config);
+                            }
+                            
+                            
+                        }else 
+                        if (config.source) {
+                            handled = true;
+                            this.option(target, config.source)
+                        }
+                    }
+                    if (!handled) {
+                        throw Error('not implemented yet: refreshHandler for config ')
+                    }
+                }.bind(this, target);
+                
+                
+                
+
+                //if (this.options.scope && init.initialValue){  // TODO: better..
+                ////    _AttrMixin.init.call(
+                ////                     this,
+                ////                     mixinConfig,
+                ////                     target,
+                ////                     undefined,
+                ////                     this.options.scope.__widgetReference
+                ////                     )
+                //
+                //    var id = this.options.scope['__' + target + 'Id'];
+                //    init.initialValue += id ? id + '/' : '';
+                //    
+                //    
+                //}
+                
+                if (!init.initialValue && this.endpoint) {
+                    init.initialValue = this.endpoint;
+                }
+                
+                if (this.options.scope) {
+                    if (this.options.scope.__state['.'][target]) {
+                        state = this.options.scope.__state['.'][target];
+                    }
+                    else {
+                        this.options.scope.__state['.'][target] = state;
+                    }
+                }
+
+                var handle = new handle_class(config, state, init);
+                this.refresh_host = PreprocessorMixin.refreshHostHandler.bind(this, handle, this.refresh_host)
+                this.refresh_auth = PreprocessorMixin.refreshAuthHandler.bind(this, handle, this.refresh_auth)
+                
+                if (target){
+                    this['preprocess_' + target] = PreprocessorMixin.preprocessHandler.bind(this, handle, proxy, target)
+                    this['refresh_' + target] = PreprocessorMixin.refreshHandler.bind(this, handle, proxy, target, this['refresh_' + target])
+
+                    if (this.options.scope) {
+                        this.options.scope.$watch('_' + target, function(new_value, old_value){
+                            if (old_value === new_value) {
+                                return
+                            }
+                            this.log('(event)', 'scopes "', target, '" has changed. updating from', old_value, 'to', new_value)
+                            if (new_value !== this.options[target]){
+                                this.option(target, new_value);
+                            }
+                        }.bind(this))
+                        this.options.scope.$watch('_' + target + '.getContent()', function(new_value, old_value){
+                            this.options.scope[target] = new_value;
+                        }.bind(this))
+                    }
+
+                    var initialValue = this['preprocess_' + target](this.options[target], true);
+                    this.options[target] = initialValue === this.options ? undefined : initialValue;
+                    //var ret = handle.handle(
+                    //    this.options[target] === ,
+                    //    undefined,  // handler
+                    //    function(handle){$this.option(target, handle)}
+                    //);
+                    //if (ret) {
+                    //    this.options[target] = ret
+                    //}
+                }
+
+            },
+            refreshAuthHandler: function(handle, superHandler, value){
+                var ret = superHandler.call(this, value),
+                    update_successful = handle.update('auth', this.getAuth())
+                // complete refreh only done, when update was successful or superHandler demands it
+                return ret === false ? ret : !update_successful
+            },
+            refreshHostHandler: function(handle, superHandler, value){
+                var ret = superHandler.call(this, value),
+                    update_successful = handle.update('host', this.getHost());
+                // complete refreh only done, when update was successful or superHandler demands it
+                return ret === false ? ret : !update_successful
+            },
+            refreshHandler: function(handle, proxy, target, superHandler, value){
+                if (this.options.scope) {
+                    if (typeof(value) == 'object' && value.__proto__.constructor !== Object && value.__proto__.constructor !== Array) {
+                        this.options.scope['_' + target] = value;
+                    }else{
+                        this.options.scope[target] = value;
+                    }
+                }
+                var ret = superHandler ? superHandler.call(this, value) : true;
+                // when proxying,no refresh is required. (TODO: ??)
+                return proxy ? false : ret;
+            },
+            preprocessHandler: function(handle, proxy, target, value, force_processing){
+                
+                var handler_class, conf;
+                if (value === undefined && this.options.scope){
+                     if (this.options.scope['_' + target]) {
+                        value = this.options.scope['_' + target];
+                    }
+                    if (this.options.scope['__' + target + 'Id']) {
+                        conf = {pk: this.options.scope['__' + target + 'Id']};
+                        value = value && typeof(value.handle) == 'function' ? value.handle(conf) : conf;
+                    }else
+                    if (this.options[target] && value === undefined) {
+                        value = this.options[target];
+                    }
+                }
+                if (this.options.scope['__' + target + 'AsNew']) {
+                    //value = value || ''; // TODO: this isnt good.?
+                    handler_class = this.handles.CreateHandler;
+                }
+                if (value && value === this.options[target] && force_processing === false) {
+                    return this.options
+                }
+                //if (this.generateStateIdentifier() == 'fancyOS.image') {
+                //    throw Error()
+                //}
+                var $this = this,
+                    returned = handle.handle(
+                        value,
+                        handler_class,
+                        function(handler){
+                            $this.option(target, handler);
+                    });
+                    // returns null if callback is provided and handler needs to be loaded.
+                if (this.options.scope && returned) {
+                    this.options.scope[target] = returned.__proto__ && returned.__proto__.constructor === Object ? returned : returned.getContent();
+                }
+                if (proxy || returned === undefined){
+                    return this.options  // this tells the preprocessing routine, to skip the update
+                }
+                return returned
+            }
+        };
+        mixins.PreprocessorMixin = PreprocessorMixin;
+
         var DevelopmentResourceMixin = {
-            init: function(mixinConfig, initialValue, asPrimary, defaultRelationships){
+            init: function(mixinConfig, initialValue, asPrimary, defaultRelationships, options){
                 ResourceMixin.init.call(
                                         this,
                                         mixinConfig,
                                         initialValue || this.object,
                                         asPrimary,
-                                        defaultRelationships || ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of]
+                                        defaultRelationships || ['-' + this._widgetConfig.relationships.child_of, '-' + this._widgetConfig.relationships.instance_of],
+                                        options
                                     );
             }
         };
         mixins.DevelopmentResourceMixin = DevelopmentResourceMixin;
+        
+        var OverlayMixin = {
+            init: function(){
+                var $this = this;
+                this.setShape(this._widgetConfig.name_shape_overlay);
+                
+                if (!this.options.inactive) {
+                    this.element.addClass(this._widgetConfig.name_state_active)
+                }
+                this.element.on('blur', function(){
+                    $this.element.removeClass($this._widgetConfig.name_state_active)
+                })
+                this.element.on('focus', function(){
+                    $this.element.addClass($this._widgetConfig.name_state_active)
+                })
+            }
+        };
+        mixins.OverlayMixin = OverlayMixin;
         
         var TOSMixin = {
             init: function(mixinConfig){

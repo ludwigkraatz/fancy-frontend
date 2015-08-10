@@ -1,7 +1,11 @@
-define(['fancyPlugin!widget:fancy-frontend:resource_interface', 'fancyPlugin!fancyFrontendConfig'], function($, config){
-    $(function() {
-        
-        $.widget( config.apps['fancy-frontend'].namespace + '.development_interface', $[config.apps['fancy-frontend'].namespace].resource_interface, {
+define(['fancyPlugin!widget:fancy-frontend:resource_interface'], function(fancyWidgetCore_resource){
+    var $ = fancyWidgetCore_resource.$,
+        config = fancyWidgetCore_resource.getFrontendConfig(),
+        widgetConfig = fancyWidgetCore_resource.getWidgetConfig();
+    fancyWidgetCore_development = fancyWidgetCore_resource.derive({
+        name: 'development_interface',
+        namespace: config.apps['fancy-frontend'].namespace,
+        widget: {
 
             _create: function(){
                 this.use_mixin('view'); // to keep inter-mixin dependency order
@@ -22,9 +26,9 @@ define(['fancyPlugin!widget:fancy-frontend:resource_interface', 'fancyPlugin!fan
                     return false
                 }
             }
-        });
+        }
+    });
         
 
-    })
-    return $
+    return fancyWidgetCore_development
 });
