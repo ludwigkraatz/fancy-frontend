@@ -1,14 +1,14 @@
 requirejs:
     paths:
-        "introspective-api-client": "js/libs/introspective_api/client"
-        "introspective-api-auth": "js/libs/introspective_api/auth"
-        "introspective-api-resources": "js/libs/introspective_api/resources"
-        "introspective-api-cache": "js/libs/introspective_api/cache"
-        "introspective-api-views": "js/libs/introspective_api/views"
-        "introspective-api-handles": "js/libs/introspective_api/handles"
-        "introspective-api-hosts--original": "js/libs/introspective_api/hosts"
+        "introspective-api-client": "fancyPlugin!lib:introspective_api/client"
+        "introspective-api-auth": "fancyPlugin!lib:introspective_api/auth"
+        "introspective-api-resources": "fancyPlugin!lib:introspective_api/resources"
+        "introspective-api-cache": "fancyPlugin!lib:introspective_api/cache"
+        "introspective-api-handles": "fancyPlugin!lib:introspective_api/handles"
+        "introspective-api-hosts--original": "fancyPlugin!lib:introspective_api/hosts"
         "introspective-api-hosts": "fancyPlugin!app:fancy-frontend:hosts"
-        "introspective-api-log": "js/libs/introspective_api/log"
+        "introspective-api-log": "fancyPlugin!lib:introspective_api/log"
+        "introspective-api-utils": "fancyPlugin!lib:introspective_api/utils"
         
         "fancyWidgetMixins": "fancyPlugin!app:fancy-frontend:widgetMixins"
         "fancyWidgetViews": "fancyPlugin!app:fancy-frontend:widgetViews"
@@ -29,6 +29,7 @@ unversioned:
     - ^/img/
     - ^/requirejs/plugins/
     - ^.*/requirejs-plugins/
+    - ^/js/libs/introspective_api/
 collect:
     /requirejs-plugins/: lib:requirejs/plugins/
 staging:

@@ -76,7 +76,17 @@ require(['text!config'], function(config){
             var app_name = frontendConfig.start.frontends[key],
                 instanceConfig = frontendConfig.frontends[app_name];
             // require hawk here, because in dependencies it might not be loaded with fancyPlugin.
-            require(['fancyPlugin!fancyFrontendConfiguration', 'fancyPlugin!hawk'], function(Configuration){
+            require([
+                     'fancyPlugin!fancyFrontendConfiguration',
+                     'fancyPlugin!hawk',
+                     'fancyPlugin!introspective-api-log',
+                     'fancyPlugin!introspective-api-client',
+                     'fancyPlugin!introspective-api-auth',
+                     'fancyPlugin!introspective-api-handles',
+                     'fancyPlugin!introspective-api-utils',
+                     'fancyPlugin!introspective-api-resources',
+                     'fancyPlugin!introspective-api-hosts',
+                     'fancyPlugin!introspective-api-cache',], function(Configuration){
                 var config = Configuration.set(instanceConfig);
                 require( ['fancyPlugin!app:'+app_name], function(app) {
                     app.open({

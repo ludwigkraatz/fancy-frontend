@@ -378,5 +378,11 @@ table.#{$frontend-prefix}instance {
         float: right;
     }
 }
+.#{$frontend-prefix}instance .#{$frontend-prefix}disabled {
+    @include disabledMixin;
+}
+.#{$frontend-prefix}instance a.#{$frontend-prefix}disabled {
+    @include disabledActionMixin;
+}
 
 

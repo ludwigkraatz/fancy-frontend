@@ -107,7 +107,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig', 'fancy
                 app.options.auth.setup({
                     hosts: app.get_hosts_for('auth'),
                     default_host: this.options.host
-                })
+                }).bind('logged_out', window.location.reload.bind(window.location)) // this.refresh.bind(this)
 
                 if (app.config.start.apps) {
                     for (key in app.config.start.apps) {
@@ -200,6 +200,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig', 'fancy
                         interactionHandler: this.openPopupFromResponse.bind(this),
                         endpoint:   current_config.host,
                         crossDomain: current_config.crossDomain !== undefined ? current_config.crossDomain : false,
+                        consumerToken: current_config.consumerToken,
                         log: this.getLog(),
                         auth: this.sendAuthorizationFor(host_id) ? this.getAuth() : undefined,
                         cache: this.cache,
@@ -306,7 +307,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig', 'fancy
             },
             create_widget: function(widget, widgetName, options){
                 var $widget = this.$(widget); 
-                if (options)this.set_options(widget, options);
+                if (typeof(options) == 'object')this.set_options(widget, options);
                 if (this.__initialized) {
                     $widget.attr('load-widget', widgetName);
                 }else{
@@ -729,7 +730,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!fancyFrontendConfig', 'fancy
                 if (this.options.popUp_from_body && !target){
                     $target = $('body')
                 }else if (target){
-                    $target = target.element ? $target.element : target;
+                    $target = target.element ? target.element : target;
                     if (target.options && target.options.scope) {
                         scope = target.options.scope;
                     }

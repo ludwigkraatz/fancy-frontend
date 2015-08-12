@@ -151,7 +151,8 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 size: null,
                 closable: false,
                 detachable: true, // TODO: plugin: default = false
-                widget_structure: ['header', 'navi', 'body', 'footer']
+                widget_structure: ['header', 'navi', 'body', 'footer'],
+                auth_header: false
             },
             mixins: {
                 draggable: mixins.DraggableMixin,
@@ -1079,6 +1080,13 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                         }
                     )
                 }
+                if (this.options.auth_header) {
+                    this.addAuthInfo(this.$header);
+                }
+            },
+            
+            addAuthInfo: function(){
+                // TODO
             },
 
             updateContent: function(data){/*
@@ -1246,7 +1254,7 @@ define(['fancyPlugin!jquery-ui', 'fancyPlugin!fancyWidgetMixins', 'fancyPlugin!f
                 if (configuration.apply_to || configuration.apply_patch) {
                     this.apply(div, configuration.apply_to ? function(content){
                         if (configuration.apply_to  instanceof Function) {
-                            configuration.apply_to(content.contents())
+                            configuration.apply_to(content)
                         }else{
                             configuration.apply_to.append(content)
                         }

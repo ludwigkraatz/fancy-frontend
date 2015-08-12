@@ -20,6 +20,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!introspective-api-handles'],
                     allowedRelationships: null,
                     resourceList: null,
                     source: null,
+                    raw: false,
                     treeWalker: null,
                     entryWidget: null,
                     entryTemplate: null,
@@ -196,7 +197,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!introspective-api-handles'],
                         class_name = config.frontend_generateClassName('action-add'),
                         target = this.asTable ? this.$header.find($this._widgetConfig.selector_elements_header) : this.$header;
                         
-                    if (target.find('.' + class_name).size() == 0) {
+                    if (target && target.find('.' + class_name).size() == 0) {
                         var createLink = $('<a href="#" class="'+class_name+'"></a>');
                         target.append(createLink);
                         createLink.click(function(event){
@@ -249,7 +250,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!introspective-api-handles'],
                                             }
                                             selectRelationship.html(output)
                                             selectRelationship.change(function(event){
-                                                $this.trigger(viewMixinEventPrefix + '-show', ['list', {relationship: $($this).val()}]);
+                                                $this.trigger(viewMixinEventPrefix + '-show', ['fancy-frontend.list', {relationship: $($this).val()}]);
                                             })
                                         }
                                     }else{
@@ -277,7 +278,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!introspective-api-handles'],
                         })
                         return
                     }
-                    if (this.options.source instanceof apiHandles.ListHandler){
+                    if (this.options.source instanceof apiHandles.ListHandler && !this.options.raw){
                         $this.log('(fancy-frontend)', '(list)', 'handler found');
                         this.options.source.getList().discover({callback: function(result){
                             content = result.getResponse();
@@ -288,7 +289,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!introspective-api-handles'],
                         //$this.$container.html('handler list');
                     }else if (this.options.source){
                         if (typeof this.options.source == 'object' && !Array.isArray(this.options.source)) {
-                            $this.log('(fancy-frontend)', '(list)', 'plain object tree', this.options.source);
+                            $this.log('(fancy-frontend)', '(list)', 'object tree', this.options.source);
                             // this is an object. show tree
                             // TODO: set header of object
                             this.tree_source = this.options.source;
@@ -733,7 +734,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!introspective-api-handles'],
                                 css_class: ['interaction-tree'],
                                 widget_identifier: 'fancy-frontend.list?',
                                 widget_options: tree_options
-                            }
+                            };
                             tree = tree_source ? this.options.treeWalker(tree_elem, tree_source, tree_template) : null;
                         }
                         
@@ -780,7 +781,7 @@ define(['fancyPlugin!fancyWidgetCore', 'fancyPlugin!introspective-api-handles'],
                         }
                     }
                     
-                    if ($this.options.onSelect && isCreated && (!this.asTable && this.entryWidget)){
+                    if ($this.options.onSelect && isCreated && !this.asTable){ //  && (this.entryWidget || this.entryTemplate)
                         curOutput.on('click', function(){
                             $this.$container.children().removeClass(config.frontend_generateClassName('state-active'))
                             curOutput.addClass(config.frontend_generateClassName('state-active'))

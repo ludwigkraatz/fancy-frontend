@@ -98,8 +98,9 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     
                     if (local && this['post_' + view + 'View']) {
                         this['post_' + view + 'View'](config)
+                        this.apply(undefined, undefined, true)
                     }
-                    this.apply(undefined, undefined, true)
+                    
                     return ret
                 },
                 
@@ -644,53 +645,82 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     this.element.data('fancy-frontend.mixins.ActionMixin.$target', mixinConfig.$target);
                 }
                 
-                this.on_refresh('source', ActionsMixin.onRefresh.bind(this, mixinConfig))
+                this.on_refresh('source', ActionsMixin.onRefresh.bind(this, mixinConfig));
+                ActionsMixin.onRefresh.call(this, mixinConfig);
             },
             
             onRefresh: function(mixinConfig){
                 var $this = this,
                     discover = mixinConfig.data.discover !== undefined ? mixinConfig.data.discover : true,
                     resource = (this.options.source && typeof(this.options.source.getResource) == 'function') ? this.options.source.getResource() : this.options.resource || this.options.source,
-                    $target = mixinConfig.$target;
+                    $target = mixinConfig.$target,
+                    actions = mixinConfig.data.actions || {},
+                    show = mixinConfig.data.show;
 
                 ActionsMixin.cleanActionContainer.call(this, mixinConfig);
 
                 if (discover && resource && !resource.isBlank()) {
                     resource.discover(function(result){
-                        var actions = result.getResponse()['actions'];
-                        if (actions) {
-                            $this.log('(fancy-frontend)', '(mixin)', '(actions)', 'found actions', actions);
-                            for (var action in actions){
-                                if (action.toUpperCase() == action) {
-                                    // skip UppderCase Actions, as POST and PUT
-                                    if (action == 'DELETE') {
-                                        ActionsMixin.addAction.call($this, {label: action, css_class: 'action-delete'}, function(){
+                        var _actions = result.getResponse()['actions'];
+                        $.each(_actions, function(action, config){
+                            if (action.toUpperCase() == action) {
+                                // skip UppderCase Actions, as POST and PUT
+                                if (action == 'DELETE') {
+                                    actions[action] = {
+                                        action: {label: action, css_class: 'action-delete'},
+                                        callback: function(resource){
                                             resource.destroy();
                                             this.destroy()
-                                        }.bind(this), $target)
+                                        }.bind(this, resource),
                                     }
-                                    if (action == 'POST' && false) {
-                                        ActionsMixin.addAction.call($this, {label: action, css_class: 'action-add'}, function(){
-                                            throw Error('TODO: create')
-                                        }, $target)
-                                    }
-                                    if (['PATCH', 'PUT'].indexOf(action) != -1) {
-                                        ActionsMixin.addAction.call($this, {label: action, css_class: 'action-edit'}, function(){
-                                            this.showView('edit')
-                                        }.bind(this), $target)
-                                    }
-                                    continue
                                 }
-                                var act = action;
-                                ActionsMixin.addAction.call($this, action, function(){
-                                    resource.execute(act)
-                                }, $target)
+                                if (action == 'POST' && false) {
+                                    actions[action] = {
+                                        action: {label: action, css_class: 'action-add'},
+                                        callback: function(){
+                                            throw Error('TODO: create')
+                                        }.bind(this),
+                                    }
+                                }
+                                if (['PATCH', 'PUT'].indexOf(action) != -1) {
+                                    actions[action] = {
+                                        action: {label: action, css_class: 'action-edit'},
+                                        callback: function(){
+                                            this.showView('edit')
+                                        }.bind(this),
+                                    }
+                                }
+                                return
                             }
-                        }
+                            actions[action] = {
+                                action: action,
+                                callback: function(resource, action, data){
+                                    resource.execute(action, data)
+                                }.bind(this, resource, action),
+                            }
+                            
+                        }.bind(this));
+                        ActionsMixin.handleActions.call($this, actions, $target, show)
+                        ActionsMixin.completedActionContainer.call($this);
                     }.bind(this))
+                }else{
+                    ActionsMixin.handleActions.call($this, actions, $target, show)
+                    ActionsMixin.completedActionContainer.call($this);
                 }
                 
-                ActionsMixin.completedActionContainer.call($this);
+            },
+            
+            handleActions: function(actions, $target, handle_only){
+                var $this = this;
+                if (actions) {
+                    $this.log('(fancy-frontend)', '(mixin)', '(actions)', 'found actions', actions);
+                    $.each(actions, function(action, config){
+                        if (handle_only && handle_only.indexOf(action) == -1) {
+                            return
+                        }
+                        ActionsMixin.addAction.call($this, config.action, config.callback, $target)
+                    })
+                }
             },
             
             cleanActionContainer: function(mixinConfig) {
@@ -718,11 +748,10 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
             },
             
             addAction: function(action, handler, $target){
-                var $this = this;
-                var action_trigger = $this.newElement({
-                        apply_to: $target,
-                        css_class: action.css_class
-                    });
+                var $this = this,
+                    action_config = typeof(action) == 'object' ? $.extend({}, action) : {};
+                action_config.apply_to = $target;
+                var action_trigger = $this.newElement(action_config);
                 action_trigger.addClass(config.frontend_generateClassName('action'))
                 if (typeof action == 'string') {
                     action_trigger.html(action);
@@ -907,13 +936,8 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                     init.initialValue = this.endpoint;
                 }
                 
-                if (this.options.scope) {
-                    if (this.options.scope.__state['.'][target]) {
-                        state = this.options.scope.__state['.'][target];
-                    }
-                    else {
-                        this.options.scope.__state['.'][target] = state;
-                    }
+                if (this.options.scope && this.options.scope.getState) {
+                    state = this.options.scope.getState(target, state);
                 }
 
                 var handle = new handle_class(config, state, init);
@@ -1040,12 +1064,17 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                 this.setShape(this._widgetConfig.name_shape_overlay);
                 
                 if (!this.options.inactive) {
+                    $this.element.focus();
                     this.element.addClass(this._widgetConfig.name_state_active)
                 }
                 this.element.on('blur', function(){
                     $this.element.removeClass($this._widgetConfig.name_state_active)
                 })
                 this.element.on('focus', function(){
+                    $this.element.addClass($this._widgetConfig.name_state_active)
+                })
+                this.$header.find(config.frontend_generateClassName('action')).on('click', function(){
+                    $this.element.focus();
                     $this.element.addClass($this._widgetConfig.name_state_active)
                 })
             }

@@ -151,6 +151,9 @@ define(['fancyPlugin!fancyWidgetCore'], function(fancyWidgetCore){
                             source: this.options.scope[menu_attr_name],
                             onSelect: function(elem){
                                 var conf;
+                                if (elem.entry.disabled) {
+                                    return 
+                                }
                                 if (elem.entry.view) {
                                     conf = [elem.entry.view, elem.entry.view_config]
                                 }
@@ -165,7 +168,7 @@ define(['fancyPlugin!fancyWidgetCore'], function(fancyWidgetCore){
                                 $this.$view.showView(conf)
                                 //$this.$view.element.trigger($this.$view.mixins.view.event_prefix + '-show', conf)
                             },
-                            entryTemplate: '<a href="#" ><span class="'+config.frontend_generateClassName('action')+' '+config.frontend_generateClassName('action-')+'{{ _source.{index}.entry.icon }}"></span><span class="'+config.frontend_generateClassName('title')+'" translate="{{ _source.{index}.label }}"></span></a>',
+                            entryTemplate: '<a href="#" class=" {{ _source.{index}.entry.disabled ? \''+config.frontend_generateClassName('disabled')+'\' : \'\' }}"><span class="'+config.frontend_generateClassName('action')+' '+config.frontend_generateClassName('action-')+'{{ _source.{index}.entry.icon }}"></span><span class="'+config.frontend_generateClassName('title')+'" translate="{{ _source.{index}.label }}"></span></a>',
                             entryTag: 'li',
                             inline: true,
                             size: config.frontend_generateClassName('size-small'),

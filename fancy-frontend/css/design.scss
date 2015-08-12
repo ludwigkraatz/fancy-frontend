@@ -369,10 +369,24 @@ $zoom: null;
     cursor: pointer;
 }
 
+@mixin disabledActionMixin {
+    cursor: not-allowed;
+    color: $color-font-weak;
+}
+
 @mixin actionMixin {
     @include clickableMixin;
     &.#{$frontend-prefix}state-active {
         cursor: default;
+    }
+    &.#{$frontend-prefix}state-disabled {
+        @include disabledActionMixin;
+    }
+}
+
+@mixin disabledMixin {
+    .#{$frontend-prefix}action, a, &.#{$frontend-prefix}action, &a {
+        @include disabledActionMixin;
     }
 }
 
@@ -532,12 +546,15 @@ $zoom: null;
 }
 
 @mixin overlayDesign {
-    
-    > .#{$frontend-prefix}header, > .#{$frontend-prefix}body, > .#{$frontend-prefix}footer {
+    display: inline;
+    > * {
+        display: inline-block;
+    }
+    > .#{$frontend-prefix}header > .#{$frontend-prefix}title, > .#{$frontend-prefix}body, > .#{$frontend-prefix}footer {
         display: none;
     }
-    &.#{$frontend-prefix}state-active.#{$frontend-prefix}size-small > .#{$frontend-prefix}body,
-    &.#{$frontend-prefix}state-active.#{$frontend-prefix}size-small > .#{$frontend-prefix}footer{
+    &.#{$frontend-prefix}state-active > .#{$frontend-prefix}body,
+    &.#{$frontend-prefix}state-active > .#{$frontend-prefix}footer{
         display: block;
         position: absolute;
         z-index: $zindex-overlay;

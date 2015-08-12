@@ -141,7 +141,7 @@ define(['fancyPlugin!jquery', 'fancyPlugin!fancyFrontendConfig'], function($, co
                                     return
                                 }
                                 //$this.log('(fancy-frontend)', '(view)', '(detail)', 'entry', header_name, value)
-                                $(elem).html(value)
+                                $(elem).html(value === undefined || value === null ? '' : value)
                             });
                             
                             
